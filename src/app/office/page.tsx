@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import OfficeCanvas from '@/components/office/Canvas';
 import Toolbar from '@/components/office/Toolbar';
@@ -21,6 +21,20 @@ import GameLobby from '@/components/games/GameLobby';
 import GameOverlay from '@/components/games/GameOverlay';
 
 export default function OfficePage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#1a1a2e', color: '#fff' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🏢</div>Loading office...
+        </div>
+      </div>
+    }>
+      <OfficeInner />
+    </Suspense>
+  );
+}
+
+function OfficeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
