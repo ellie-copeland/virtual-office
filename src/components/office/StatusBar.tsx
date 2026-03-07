@@ -86,8 +86,8 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
       left: 0,
       right: 0,
       height: 64,
-      background: 'linear-gradient(180deg, #2d2d3d 0%, #1a1a2e 100%)',
-      borderTop: '1px solid #3d3d4d',
+      background: 'linear-gradient(180deg, #6B4226 0%, #4A3828 100%)',
+      borderTop: '2px solid #C8A850',
       display: 'flex',
       alignItems: 'center',
       padding: '0 16px',
@@ -101,10 +101,10 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
             {currentRoom ? '🚪' : '🌍'}
           </span>
           <div>
-            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>
+            <div style={{ color: '#E8D8C0', fontSize: 13, fontWeight: 600 }}>
               {currentRoom?.name || 'Open Area'}
             </div>
-            <div style={{ color: '#888', fontSize: 11 }}>
+            <div style={{ color: '#D4B88A', fontSize: 11 }}>
               {nearbyUsers.length} {nearbyUsers.length === 1 ? 'person' : 'people'} nearby
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
           <span style={{ fontSize: 16 }}>
             {isMuted ? '🔇' : '🎤'}
           </span>
-          <span style={{ color: '#888', fontSize: 11 }}>
+          <span style={{ color: '#D4B88A', fontSize: 11 }}>
             {isMuted ? 'Muted' : 'Mic On'}
           </span>
         </div>
@@ -126,7 +126,7 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
           <span style={{ fontSize: 16 }}>
             {isCameraOn ? '📹' : '📷'}
           </span>
-          <span style={{ color: '#888', fontSize: 11 }}>
+          <span style={{ color: '#D4B88A', fontSize: 11 }}>
             {isCameraOn ? 'Camera On' : 'Camera Off'}
           </span>
         </div>
@@ -143,11 +143,11 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
             onBlur={handleStatusMessageSubmit}
             placeholder="Set your status message..."
             style={{
-              background: '#1a1a2e',
-              border: '1px solid #3d3d4d',
+              background: '#5C4A38',
+              border: '1px solid #C8A87A',
               borderRadius: 16,
               padding: '6px 12px',
-              color: '#fff',
+              color: '#E8D8C0',
               fontSize: 13,
               outline: 'none',
               width: '100%',
@@ -162,7 +162,7 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
               border: '1px solid transparent',
               borderRadius: 16,
               padding: '6px 12px',
-              color: statusMessage ? '#fff' : '#888',
+              color: statusMessage ? '#E8D8C0' : '#D4B88A',
               fontSize: 13,
               cursor: 'pointer',
               maxWidth: 300,
@@ -170,7 +170,7 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}
-            onMouseEnter={e => (e.target as HTMLButtonElement).style.border = '1px solid #3d3d4d'}
+            onMouseEnter={e => (e.target as HTMLButtonElement).style.border = '1px solid #C8A850'}
             onMouseLeave={e => (e.target as HTMLButtonElement).style.border = '1px solid transparent'}
           >
             {statusMessage || 'Click to set status message...'}
@@ -187,15 +187,15 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
             alignItems: 'center',
             gap: 6,
             background: 'transparent',
-            border: '1px solid #3d3d4d',
+            border: '1px solid #C8A87A',
             borderRadius: 20,
             padding: '8px 12px',
-            color: '#fff',
+            color: '#E8D8C0',
             cursor: 'pointer',
             fontSize: 13,
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#3d3d4d'}
+          onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#C8A850'}
           onMouseLeave={e => (e.target as HTMLButtonElement).style.background = 'transparent'}
         >
           <span>{currentStatus.icon}</span>
@@ -211,8 +211,8 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
             bottom: '100%',
             right: 0,
             marginBottom: 8,
-            background: '#2d2d3d',
-            border: '1px solid #4d4d5d',
+            background: '#5C4A38',
+            border: '2px solid #C8A850',
             borderRadius: 8,
             padding: 4,
             minWidth: 160,
@@ -225,9 +225,9 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  background: currentUser?.status === status.id ? '#3d3d4d' : 'transparent',
+                  background: currentUser?.status === status.id ? '#C8A850' : 'transparent',
                   border: 'none',
-                  color: '#fff',
+                  color: '#E8D8C0',
                   cursor: 'pointer',
                   fontSize: 13,
                   textAlign: 'left',
@@ -239,7 +239,7 @@ export default function StatusBar({ users, currentUserId, currentRoom, isMuted, 
                 }}
                 onMouseEnter={e => {
                   if (currentUser?.status !== status.id) {
-                    (e.target as HTMLButtonElement).style.background = '#3d3d4d';
+                    (e.target as HTMLButtonElement).style.background = '#6B4226';
                   }
                 }}
                 onMouseLeave={e => {

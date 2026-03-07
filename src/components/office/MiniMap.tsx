@@ -25,8 +25,8 @@ export default function MiniMap({ map, users, currentUserId }: Props) {
   return (
     <div style={{
       position: 'fixed', bottom: 80, left: 16, zIndex: 80,
-      background: 'rgba(30,30,50,0.85)', borderRadius: 12, padding: 8,
-      border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+      background: 'rgba(30,20,10,0.85)', borderRadius: 12, padding: 8,
+      border: '2px solid #C8A850', boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
       backdropFilter: 'blur(8px)',
     }}>
       <svg width={map.width * SCALE} height={map.height * SCALE}>
@@ -50,7 +50,7 @@ export default function MiniMap({ map, users, currentUserId }: Props) {
             key={room.id}
             x={(room.bounds.x + room.bounds.width / 2) * SCALE}
             y={(room.bounds.y + room.bounds.height / 2) * SCALE + 1}
-            fill="rgba(255,255,255,0.5)"
+            fill="rgba(232,216,192,0.7)"
             fontSize={7}
             fontFamily="monospace"
             textAnchor="middle"
@@ -67,7 +67,7 @@ export default function MiniMap({ map, users, currentUserId }: Props) {
             cy={user.position.y * SCALE}
             r={user.id === currentUserId ? 3 : 2}
             fill={user.color}
-            stroke={user.id === currentUserId ? '#fff' : 'none'}
+            stroke={user.id === currentUserId ? '#E8D8C0' : 'none'}
             strokeWidth={1}
           />
         ))}

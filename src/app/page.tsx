@@ -89,26 +89,27 @@ export default function LandingPage() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      height: '100vh', background: 'linear-gradient(135deg, #1A0E0A 0%, #4A3828 50%, #6E5C48 100%)',
     }}>
       <div style={{
-        background: '#2d2d3d', borderRadius: 20, padding: 48, width: 420,
+        background: '#4A3828', borderRadius: 20, padding: 48, width: 420,
         boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        border: '2px solid #6B4226',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>🏢</div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0 }}>Virtual Office</h1>
-          <p style={{ color: '#888', marginTop: 8, fontSize: 14 }}>Walk around, talk to your team</p>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#E8D8C0', margin: 0 }}>Virtual Office</h1>
+          <p style={{ color: '#D4B88A', marginTop: 8, fontSize: 14 }}>Walk around, talk to your team</p>
         </div>
 
         {/* Mode Toggle */}
-        <div style={{ display: 'flex', marginBottom: 24, background: '#1a1a2e', borderRadius: 10, padding: 4 }}>
+        <div style={{ display: 'flex', marginBottom: 24, background: '#3A2A1A', borderRadius: 10, padding: 4 }}>
           <button
             onClick={() => setMode('login')}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none',
-              background: mode === 'login' ? '#6C5CE7' : 'transparent',
-              color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              background: mode === 'login' ? 'linear-gradient(135deg, #C8A850, #D4B860)' : 'transparent',
+              color: '#E8D8C0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
               transition: 'all 0.2s',
             }}
           >
@@ -118,8 +119,8 @@ export default function LandingPage() {
             onClick={() => setMode('register')}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none',
-              background: mode === 'register' ? '#6C5CE7' : 'transparent',
-              color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              background: mode === 'register' ? 'linear-gradient(135deg, #C8A850, #D4B860)' : 'transparent',
+              color: '#E8D8C0', fontSize: 14, fontWeight: 600, cursor: 'pointer',
               transition: 'all 0.2s',
             }}
           >
@@ -130,8 +131,8 @@ export default function LandingPage() {
         {/* Error Message */}
         {error && (
           <div style={{
-            background: '#ff444444', border: '1px solid #ff4444', borderRadius: 8,
-            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#ffaaaa',
+            background: 'rgba(139,32,32,0.3)', border: '1px solid #8B2020', borderRadius: 8,
+            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#E8D8C0',
           }}>
             {error}
           </div>
@@ -140,7 +141,7 @@ export default function LandingPage() {
         {/* Name field (register only) */}
         {mode === 'register' && (
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
               Your Name
             </label>
             <input
@@ -149,18 +150,18 @@ export default function LandingPage() {
               placeholder="Enter your name..."
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 10,
-                border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+                border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
                 fontSize: 16, outline: 'none', transition: 'border-color 0.2s',
               }}
-              onFocus={e => (e.target.style.borderColor = '#6C5CE7')}
-              onBlur={e => (e.target.style.borderColor = '#3d3d4d')}
+              onFocus={e => (e.target.style.borderColor = '#C8A850')}
+              onBlur={e => (e.target.style.borderColor = '#C8A87A')}
             />
           </div>
         )}
 
         {/* Email */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
             Email
           </label>
           <input
@@ -170,17 +171,17 @@ export default function LandingPage() {
             placeholder="Enter your email..."
             style={{
               width: '100%', padding: '12px 16px', borderRadius: 10,
-              border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+              border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
               fontSize: 16, outline: 'none', transition: 'border-color 0.2s',
             }}
-            onFocus={e => (e.target.style.borderColor = '#6C5CE7')}
-            onBlur={e => (e.target.style.borderColor = '#3d3d4d')}
+            onFocus={e => (e.target.style.borderColor = '#C8A850')}
+            onBlur={e => (e.target.style.borderColor = '#C8A87A')}
           />
         </div>
 
         {/* Password */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
             Password
           </label>
           <input
@@ -191,18 +192,18 @@ export default function LandingPage() {
             placeholder="Enter your password..."
             style={{
               width: '100%', padding: '12px 16px', borderRadius: 10,
-              border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+              border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
               fontSize: 16, outline: 'none', transition: 'border-color 0.2s',
             }}
-            onFocus={e => (e.target.style.borderColor = '#6C5CE7')}
-            onBlur={e => (e.target.style.borderColor = '#3d3d4d')}
+            onFocus={e => (e.target.style.borderColor = '#C8A850')}
+            onBlur={e => (e.target.style.borderColor = '#C8A87A')}
           />
         </div>
 
         {/* Title (register only) */}
         {mode === 'register' && (
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
               Title (optional)
             </label>
             <input
@@ -211,7 +212,7 @@ export default function LandingPage() {
               placeholder="e.g. Engineer, Designer..."
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 10,
-                border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+                border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
                 fontSize: 14, outline: 'none',
               }}
             />
@@ -221,7 +222,7 @@ export default function LandingPage() {
         {/* Avatar Color (register only) */}
         {mode === 'register' && (
           <div style={{ marginBottom: 28 }}>
-            <label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
               Avatar Color
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -231,7 +232,7 @@ export default function LandingPage() {
                   onClick={() => setColor(c)}
                   style={{
                     width: 36, height: 36, borderRadius: '50%', background: c,
-                    border: color === c ? '3px solid #fff' : '3px solid transparent',
+                    border: color === c ? '3px solid #C8A850' : '3px solid transparent',
                     cursor: 'pointer', transition: 'transform 0.15s',
                     transform: color === c ? 'scale(1.15)' : 'scale(1)',
                   }}
@@ -255,7 +256,7 @@ export default function LandingPage() {
               }}>
                 {name ? name[0].toUpperCase() : '?'}
               </div>
-              <span style={{ fontSize: 13, color: '#ccc' }}>{name || 'You'}</span>
+              <span style={{ fontSize: 13, color: '#E8D8C0' }}>{name || 'You'}</span>
             </div>
           </div>
         )}
@@ -265,8 +266,8 @@ export default function LandingPage() {
           disabled={!isFormValid() || loading}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12,
-            background: isFormValid() && !loading ? 'linear-gradient(135deg, #6C5CE7, #a855f7)' : '#3d3d4d',
-            color: '#fff', border: 'none', fontSize: 16, fontWeight: 600,
+            background: isFormValid() && !loading ? 'linear-gradient(135deg, #C8A850, #D4B860)' : '#6B4226',
+            color: '#E8D8C0', border: 'none', fontSize: 16, fontWeight: 600,
             cursor: isFormValid() && !loading ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s',
           }}

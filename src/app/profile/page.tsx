@@ -116,7 +116,7 @@ export default function ProfilePage() {
     return (
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', background: '#1a1a2e', color: '#fff',
+        height: '100vh', background: '#1A0E0A', color: '#E8D8C0',
       }}>
         Loading...
       </div>
@@ -126,17 +126,18 @@ export default function ProfilePage() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      minHeight: '100vh', background: 'linear-gradient(135deg, #1A0E0A 0%, #4A3828 50%, #6E5C48 100%)',
       padding: '20px',
     }}>
       <div style={{
-        background: '#2d2d3d', borderRadius: 20, padding: 48, width: 480,
+        background: '#4A3828', borderRadius: 20, padding: 48, width: 480,
         boxShadow: '0 20px 60px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto',
+        border: '2px solid #6B4226',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>👤</div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0 }}>Profile Settings</h1>
-          <p style={{ color: '#888', marginTop: 8, fontSize: 14 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#E8D8C0', margin: 0 }}>Profile Settings</h1>
+          <p style={{ color: '#D4B88A', marginTop: 8, fontSize: 14 }}>
             {userData.email} • {userData.role === 'admin' ? 'Admin' : 'Member'}
           </p>
         </div>
@@ -144,8 +145,8 @@ export default function ProfilePage() {
         {/* Success/Error Messages */}
         {message && (
           <div style={{
-            background: '#22c55e44', border: '1px solid #22c55e', borderRadius: 8,
-            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#86efac',
+            background: 'rgba(74,122,58,0.3)', border: '1px solid #4A7A3A', borderRadius: 8,
+            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#E8D8C0',
           }}>
             {message}
           </div>
@@ -153,8 +154,8 @@ export default function ProfilePage() {
 
         {error && (
           <div style={{
-            background: '#ef444444', border: '1px solid #ef4444', borderRadius: 8,
-            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#fca5a5',
+            background: 'rgba(139,32,32,0.3)', border: '1px solid #8B2020', borderRadius: 8,
+            padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#E8D8C0',
           }}>
             {error}
           </div>
@@ -162,7 +163,7 @@ export default function ProfilePage() {
 
         {/* Name */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
             Display Name
           </label>
           <input
@@ -171,17 +172,17 @@ export default function ProfilePage() {
             placeholder="Enter your name..."
             style={{
               width: '100%', padding: '12px 16px', borderRadius: 10,
-              border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+              border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
               fontSize: 16, outline: 'none', transition: 'border-color 0.2s',
             }}
-            onFocus={e => (e.target.style.borderColor = '#6C5CE7')}
-            onBlur={e => (e.target.style.borderColor = '#3d3d4d')}
+            onFocus={e => (e.target.style.borderColor = '#C8A850')}
+            onBlur={e => (e.target.style.borderColor = '#C8A87A')}
           />
         </div>
 
         {/* Title */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
             Job Title
           </label>
           <input
@@ -190,17 +191,17 @@ export default function ProfilePage() {
             placeholder="e.g. Engineer, Designer..."
             style={{
               width: '100%', padding: '12px 16px', borderRadius: 10,
-              border: '2px solid #3d3d4d', background: '#1a1a2e', color: '#fff',
+              border: '2px solid #C8A87A', background: '#5C4A38', color: '#E8D8C0',
               fontSize: 14, outline: 'none',
             }}
-            onFocus={e => (e.target.style.borderColor = '#6C5CE7')}
-            onBlur={e => (e.target.style.borderColor = '#3d3d4d')}
+            onFocus={e => (e.target.style.borderColor = '#C8A850')}
+            onBlur={e => (e.target.style.borderColor = '#C8A87A')}
           />
         </div>
 
         {/* Avatar Color */}
         <div style={{ marginBottom: 28 }}>
-          <label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#aaa', fontWeight: 500 }}>
+          <label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#D4B88A', fontWeight: 500 }}>
             Avatar Color
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -210,7 +211,7 @@ export default function ProfilePage() {
                 onClick={() => setColor(c)}
                 style={{
                   width: 36, height: 36, borderRadius: '50%', background: c,
-                  border: color === c ? '3px solid #fff' : '3px solid transparent',
+                  border: color === c ? '3px solid #C8A850' : '3px solid transparent',
                   cursor: 'pointer', transition: 'transform 0.15s',
                   transform: color === c ? 'scale(1.15)' : 'scale(1)',
                 }}
@@ -221,22 +222,22 @@ export default function ProfilePage() {
 
         {/* Settings */}
         <div style={{ marginBottom: 28 }}>
-          <label style={{ display: 'block', marginBottom: 16, fontSize: 15, color: '#fff', fontWeight: 600 }}>
+          <label style={{ display: 'block', marginBottom: 16, fontSize: 15, color: '#E8D8C0', fontWeight: 600 }}>
             Default Settings
           </label>
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ fontSize: 14, color: '#ccc' }}>Start muted</span>
+            <span style={{ fontSize: 14, color: '#D4B88A' }}>Start muted</span>
             <button
               onClick={() => setDefaultMuted(!defaultMuted)}
               style={{
                 width: 48, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                background: defaultMuted ? '#6C5CE7' : '#3d3d4d', position: 'relative',
+                background: defaultMuted ? '#C8A850' : '#6B4226', position: 'relative',
                 transition: 'background 0.2s',
               }}
             >
               <div style={{
-                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                width: 20, height: 20, borderRadius: '50%', background: '#E8D8C0',
                 position: 'absolute', top: 2, transition: 'left 0.2s',
                 left: defaultMuted ? 26 : 2,
               }} />
@@ -244,17 +245,17 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ fontSize: 14, color: '#ccc' }}>Start with camera on</span>
+            <span style={{ fontSize: 14, color: '#D4B88A' }}>Start with camera on</span>
             <button
               onClick={() => setDefaultCamera(!defaultCamera)}
               style={{
                 width: 48, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                background: defaultCamera ? '#6C5CE7' : '#3d3d4d', position: 'relative',
+                background: defaultCamera ? '#C8A850' : '#6B4226', position: 'relative',
                 transition: 'background 0.2s',
               }}
             >
               <div style={{
-                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                width: 20, height: 20, borderRadius: '50%', background: '#E8D8C0',
                 position: 'absolute', top: 2, transition: 'left 0.2s',
                 left: defaultCamera ? 26 : 2,
               }} />
@@ -262,13 +263,13 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ fontSize: 14, color: '#ccc' }}>Theme</span>
+            <span style={{ fontSize: 14, color: '#D4B88A' }}>Theme</span>
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
               style={{
-                padding: '8px 12px', borderRadius: 8, border: '2px solid #3d3d4d',
-                background: '#1a1a2e', color: '#fff', fontSize: 14, outline: 'none',
+                padding: '8px 12px', borderRadius: 8, border: '2px solid #C8A87A',
+                background: '#5C4A38', color: '#E8D8C0', fontSize: 14, outline: 'none',
               }}
             >
               <option value="dark">Dark</option>
@@ -290,8 +291,8 @@ export default function ProfilePage() {
             }}>
               {name ? name[0].toUpperCase() : '?'}
             </div>
-            <span style={{ fontSize: 13, color: '#ccc' }}>{name || 'You'}</span>
-            <span style={{ fontSize: 11, color: '#888' }}>{title}</span>
+            <span style={{ fontSize: 13, color: '#E8D8C0' }}>{name || 'You'}</span>
+            <span style={{ fontSize: 11, color: '#D4B88A' }}>{title}</span>
           </div>
         </div>
 
@@ -302,8 +303,8 @@ export default function ProfilePage() {
             disabled={!name.trim() || loading}
             style={{
               flex: 1, padding: '14px 24px', borderRadius: 12,
-              background: name.trim() && !loading ? 'linear-gradient(135deg, #6C5CE7, #a855f7)' : '#3d3d4d',
-              color: '#fff', border: 'none', fontSize: 16, fontWeight: 600,
+              background: name.trim() && !loading ? 'linear-gradient(135deg, #C8A850, #D4B860)' : '#6B4226',
+              color: '#E8D8C0', border: 'none', fontSize: 16, fontWeight: 600,
               cursor: name.trim() && !loading ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s',
             }}
@@ -317,7 +318,7 @@ export default function ProfilePage() {
             onClick={() => router.push('/office')}
             style={{
               flex: 1, padding: '12px 20px', borderRadius: 10,
-              background: 'transparent', color: '#6C5CE7', border: '2px solid #6C5CE7',
+              background: 'transparent', color: '#C8A850', border: '2px solid #C8A850',
               fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
             }}
           >
@@ -328,7 +329,7 @@ export default function ProfilePage() {
             onClick={handleLogout}
             style={{
               flex: 1, padding: '12px 20px', borderRadius: 10,
-              background: 'transparent', color: '#ff4444', border: '2px solid #ff4444',
+              background: 'transparent', color: '#8B2020', border: '2px solid #8B2020',
               fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
             }}
           >

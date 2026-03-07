@@ -176,8 +176,8 @@ export default function NotificationToast({ users, currentUserId, messages, meet
           key={toast.id}
           onClick={() => handleToastClick(toast)}
           style={{
-            background: 'linear-gradient(135deg, #2d2d3d 0%, #1a1a2e 100%)',
-            border: '1px solid #4d4d5d',
+            background: 'linear-gradient(135deg, #5C4A38 0%, #4A3828 100%)',
+            border: '2px solid #C8A850',
             borderRadius: 12,
             padding: 16,
             minWidth: 300,
@@ -205,7 +205,7 @@ export default function NotificationToast({ users, currentUserId, messages, meet
             
             <div style={{ flex: 1 }}>
               <div style={{
-                color: '#fff',
+                color: '#E8D8C0',
                 fontSize: 14,
                 fontWeight: 600,
                 marginBottom: 4,
@@ -214,7 +214,7 @@ export default function NotificationToast({ users, currentUserId, messages, meet
               </div>
               
               <div style={{
-                color: '#ddd',
+                color: '#D4B88A',
                 fontSize: 13,
                 lineHeight: 1.4,
               }}>
@@ -223,7 +223,7 @@ export default function NotificationToast({ users, currentUserId, messages, meet
 
               {toast.actionable && (
                 <div style={{
-                  color: '#6C5CE7',
+                  color: '#C8A850',
                   fontSize: 11,
                   marginTop: 8,
                   fontWeight: 500,
@@ -241,7 +241,7 @@ export default function NotificationToast({ users, currentUserId, messages, meet
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#888',
+                color: '#D4B88A',
                 cursor: 'pointer',
                 fontSize: 16,
                 padding: 4,
@@ -250,8 +250,8 @@ export default function NotificationToast({ users, currentUserId, messages, meet
                 transition: 'color 0.15s',
                 flexShrink: 0,
               }}
-              onMouseEnter={e => (e.target as HTMLButtonElement).style.color = '#fff'}
-              onMouseLeave={e => (e.target as HTMLButtonElement).style.color = '#888'}
+              onMouseEnter={e => (e.target as HTMLButtonElement).style.color = '#E8D8C0'}
+              onMouseLeave={e => (e.target as HTMLButtonElement).style.color = '#D4B88A'}
             >
               ×
             </button>
@@ -264,12 +264,12 @@ export default function NotificationToast({ users, currentUserId, messages, meet
             left: 0,
             right: 0,
             height: 2,
-            background: 'rgba(108, 92, 231, 0.2)',
+            background: 'rgba(200, 168, 80, 0.2)',
             borderRadius: '0 0 12px 12px',
           }}>
             <div style={{
               height: '100%',
-              background: '#6C5CE7',
+              background: '#C8A850',
               borderRadius: '0 0 12px 12px',
               animation: 'progressBar 5s linear',
               transformOrigin: 'left',

@@ -212,18 +212,20 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
   return (
     <div style={{
       position: 'fixed', right: 0, top: 0, bottom: 136, width: 340,
-      background: '#2d2d3d', borderLeft: '1px solid #3d3d4d',
+      background: '#4A3828', borderLeft: '2px solid #C8A850',
       display: 'flex', flexDirection: 'column', zIndex: 90,
     }}>
       {/* Tabs with unread badges */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #3d3d4d' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #6B4226' }}>
         {(['global', 'proximity', 'room', 'dm'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
-              flex: 1, padding: '10px 4px', background: tab === t ? '#3d3d4d' : 'transparent',
-              color: tab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer',
+              flex: 1, padding: '10px 4px', 
+              background: 'transparent',
+              borderBottom: tab === t ? '2px solid #C8A850' : '2px solid transparent',
+              color: tab === t ? '#E8D8C0' : '#D4B88A', border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: 500, transition: 'all 0.15s', position: 'relative',
             }}
           >
@@ -235,7 +237,7 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
       {/* DM target selector with unread indicators */}
       {tab === 'dm' && (
         <div style={{ padding: 8 }}>
-          <div style={{ marginBottom: 8, fontSize: 12, color: '#aaa' }}>Direct Messages:</div>
+          <div style={{ marginBottom: 8, fontSize: 12, color: '#D4B88A' }}>Direct Messages:</div>
           {users.filter(u => u.id !== currentUserId).map(u => {
             const unreadCount = unreadCounts.dm[u.id] || 0;
             return (
@@ -244,9 +246,9 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
                 onClick={() => setDmTarget(u.id)}
                 style={{
                   padding: '8px 12px', marginBottom: 4, borderRadius: 6,
-                  background: dmTarget === u.id ? '#3d3d4d' : 'transparent',
+                  background: dmTarget === u.id ? '#6B4226' : 'transparent',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                  border: unreadCount > 0 ? '1px solid #6C5CE7' : '1px solid transparent',
+                  border: unreadCount > 0 ? '1px solid #C8A850' : '1px solid transparent',
                 }}
               >
                 <div style={{
@@ -256,10 +258,10 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
                 }}>
                   {u.name[0]?.toUpperCase()}
                 </div>
-                <span style={{ color: '#fff', fontSize: 13, flex: 1 }}>{u.name}</span>
+                <span style={{ color: '#E8D8C0', fontSize: 13, flex: 1 }}>{u.name}</span>
                 {unreadCount > 0 && (
                   <span style={{
-                    background: '#6C5CE7', color: '#fff', fontSize: 10, 
+                    background: '#C8A850', color: '#E8D8C0', fontSize: 10, 
                     padding: '2px 6px', borderRadius: '10px', minWidth: 16, textAlign: 'center'
                   }}>
                     {unreadCount}
@@ -274,36 +276,52 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
         {filtered.length === 0 && (
-          <div style={{ color: '#666', textAlign: 'center', marginTop: 40, fontSize: 13 }}>
+          <div style={{ color: '#D4B88A', textAlign: 'center', marginTop: 40, fontSize: 13 }}>
             {tab === 'dm' && !dmTarget ? 'Select a user to start chatting' : 'No messages yet'}
           </div>
         )}
-        {filtered.map(m => (
-          <div key={m.id} style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%', background: m.senderColor,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, color: '#fff', fontWeight: 700, flexShrink: 0,
-              }}>
-                {m.senderName[0]?.toUpperCase()}
+        {filtered.map(m => {
+          const isCurrentUser = m.senderId === currentUserId;
+          const bubbleColor = isCurrentUser ? '#C8A850' : '#C8A87A';
+          const textColor = isCurrentUser ? '#1A0E0A' : '#3A2A1A';
+          
+          return (
+            <div key={m.id} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%', background: m.senderColor,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, color: '#fff', fontWeight: 700, flexShrink: 0,
+                }}>
+                  {m.senderName[0]?.toUpperCase()}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#E8D8C0' }}>
+                  {m.senderName}
+                </span>
+                <span style={{ fontSize: 10, color: '#D4B88A' }}>
+                  {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: m.senderColor }}>
-                {m.senderName}
-              </span>
-              <span style={{ fontSize: 10, color: '#666' }}>
-                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <div style={{ 
+                fontSize: 13, 
+                color: textColor, 
+                marginLeft: 26, 
+                lineHeight: 1.4,
+                background: bubbleColor,
+                padding: '8px 12px',
+                borderRadius: 12,
+                display: 'inline-block',
+                maxWidth: '80%'
+              }}>
+                {m.content}
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: '#ddd', marginLeft: 26, lineHeight: 1.4 }}>
-              {m.content}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         
         {/* Typing indicators */}
         {currentTypingUsers.length > 0 && (
-          <div style={{ fontSize: 12, color: '#888', fontStyle: 'italic', marginTop: 8 }}>
+          <div style={{ fontSize: 12, color: '#D4B88A', fontStyle: 'italic', marginTop: 8 }}>
             {currentTypingUsers.join(', ')} {currentTypingUsers.length === 1 ? 'is' : 'are'} typing...
           </div>
         )}
@@ -312,8 +330,8 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
       {/* Emoji Picker */}
       {showEmojiPicker && (
         <div style={{
-          position: 'absolute', bottom: 70, right: 12, background: '#3d3d4d',
-          border: '1px solid #4d4d5d', borderRadius: 8, padding: 8,
+          position: 'absolute', bottom: 70, right: 12, background: '#5C4A38',
+          border: '2px solid #C8A850', borderRadius: 8, padding: 8,
           display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4,
           zIndex: 100,
         }}>
@@ -326,7 +344,7 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
                 cursor: 'pointer', fontSize: 18, borderRadius: 4,
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#4d4d5d'}
+              onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#6B4226'}
               onMouseLeave={e => (e.target as HTMLButtonElement).style.background = 'transparent'}
             >
               {emoji}
@@ -337,7 +355,7 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
 
       {/* Input with emoji button */}
       <div style={{
-        padding: 12, borderTop: '1px solid #3d3d4d',
+        padding: 12, borderTop: '1px solid #6B4226',
         display: 'flex', gap: 8,
       }}>
         <input
@@ -349,7 +367,7 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
           disabled={tab === 'dm' && !dmTarget}
           style={{
             flex: 1, padding: '10px 14px', borderRadius: 10,
-            background: '#1a1a2e', color: '#fff', border: '1px solid #3d3d4d',
+            background: '#5C4A38', color: '#E8D8C0', border: '1px solid #C8A87A',
             fontSize: 13, outline: 'none',
             opacity: tab === 'dm' && !dmTarget ? 0.5 : 1,
           }}
@@ -357,8 +375,8 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           style={{
-            padding: '10px 12px', borderRadius: 10, background: showEmojiPicker ? '#6C5CE7' : '#4d4d5d',
-            color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14,
+            padding: '10px 12px', borderRadius: 10, background: showEmojiPicker ? '#C8A850' : '#6B4226',
+            color: '#E8D8C0', border: 'none', cursor: 'pointer', fontSize: 14,
           }}
         >
           😀
@@ -368,8 +386,8 @@ export default function ChatPanel({ isOpen, messages, currentUserId, currentRoom
           disabled={!input.trim() || (tab === 'dm' && !dmTarget)}
           style={{
             padding: '10px 16px', borderRadius: 10, 
-            background: (!input.trim() || (tab === 'dm' && !dmTarget)) ? '#4d4d5d' : '#6C5CE7',
-            color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14,
+            background: (!input.trim() || (tab === 'dm' && !dmTarget)) ? '#6B4226' : '#C8A850',
+            color: '#E8D8C0', border: 'none', cursor: 'pointer', fontSize: 14,
             opacity: (!input.trim() || (tab === 'dm' && !dmTarget)) ? 0.5 : 1,
           }}
         >

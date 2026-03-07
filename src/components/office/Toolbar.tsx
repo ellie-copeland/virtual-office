@@ -28,7 +28,7 @@ const STATUSES: { value: UserStatus; label: string; icon: string }[] = [
 const btnBase: React.CSSProperties = {
   width: 44, height: 44, borderRadius: 12, border: 'none',
   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontSize: 18, transition: 'all 0.15s', color: '#fff',
+  fontSize: 18, transition: 'all 0.15s', color: '#E8D8C0',
 };
 
 export default function Toolbar(props: Props) {
@@ -37,15 +37,15 @@ export default function Toolbar(props: Props) {
   return (
     <div style={{
       position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-      background: '#2d2d3d', borderRadius: 16, padding: '8px 16px',
+      background: '#5C4A38', borderRadius: 16, padding: '8px 16px',
       display: 'flex', alignItems: 'center', gap: 8,
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100,
-      backdropFilter: 'blur(12px)', border: '1px solid #3d3d4d',
+      backdropFilter: 'blur(12px)', border: '2px solid #C8A850',
     }}>
       {/* Mic */}
       <button
         onClick={props.onToggleMic}
-        style={{ ...btnBase, background: isMuted ? '#e74c3c' : '#3d3d4d' }}
+        style={{ ...btnBase, background: isMuted ? '#8B2020' : '#6B4226' }}
         title={isMuted ? 'Unmute' : 'Mute'}
       >
         {isMuted ? '🔇' : '🎤'}
@@ -54,7 +54,7 @@ export default function Toolbar(props: Props) {
       {/* Camera */}
       <button
         onClick={props.onToggleCamera}
-        style={{ ...btnBase, background: isCameraOn ? '#4CAF50' : '#3d3d4d' }}
+        style={{ ...btnBase, background: isCameraOn ? '#4A7A3A' : '#6B4226' }}
         title={isCameraOn ? 'Turn off camera' : 'Turn on camera'}
       >
         {isCameraOn ? '📹' : '📷'}
@@ -63,20 +63,20 @@ export default function Toolbar(props: Props) {
       {/* Screen Share */}
       <button
         onClick={props.onToggleScreenShare}
-        style={{ ...btnBase, background: isScreenSharing ? '#2196F3' : '#3d3d4d' }}
+        style={{ ...btnBase, background: isScreenSharing ? '#C8A850' : '#6B4226' }}
         title="Screen share"
       >
         🖥️
       </button>
 
-      <div style={{ width: 1, height: 28, background: '#4d4d5d', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 28, background: '#C8A850', margin: '0 4px' }} />
 
       {/* Status */}
       <select
         value={status}
         onChange={e => props.onStatusChange(e.target.value as UserStatus)}
         style={{
-          background: '#3d3d4d', color: '#fff', border: 'none', borderRadius: 10,
+          background: '#6B4226', color: '#E8D8C0', border: '1px solid #C8A850', borderRadius: 10,
           padding: '8px 12px', fontSize: 13, cursor: 'pointer', outline: 'none',
         }}
       >
@@ -85,7 +85,7 @@ export default function Toolbar(props: Props) {
         ))}
       </select>
 
-      <div style={{ width: 1, height: 28, background: '#4d4d5d', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 28, background: '#C8A850', margin: '0 4px' }} />
 
       {/* Emotes */}
       {EMOTES.map(e => (
@@ -98,25 +98,25 @@ export default function Toolbar(props: Props) {
         </button>
       ))}
 
-      <div style={{ width: 1, height: 28, background: '#4d4d5d', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 28, background: '#C8A850', margin: '0 4px' }} />
 
       {/* Games */}
       {props.onOpenGames && (
         <button
           onClick={props.onOpenGames}
-          style={{ ...btnBase, background: '#3d3d4d' }}
+          style={{ ...btnBase, background: '#6B4226' }}
           title="Mini Games"
         >
           🎮
         </button>
       )}
 
-      <div style={{ width: 1, height: 28, background: '#4d4d5d', margin: '0 4px' }} />
+      <div style={{ width: 1, height: 28, background: '#C8A850', margin: '0 4px' }} />
 
       {/* Chat Toggle */}
       <button
         onClick={props.onToggleChat}
-        style={{ ...btnBase, background: isChatOpen ? '#6C5CE7' : '#3d3d4d' }}
+        style={{ ...btnBase, background: isChatOpen ? '#C8A850' : '#6B4226' }}
         title="Toggle chat"
       >
         💬

@@ -175,14 +175,14 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
             position: 'fixed',
             left: obj.x * TILE_SIZE + 16,
             top: obj.y * TILE_SIZE - 10,
-            background: 'rgba(24,16,32,0.9)',
-            color: '#E8D8C8',
+            background: 'rgba(30,20,10,0.85)',
+            color: '#E8D8C0',
             padding: '6px 12px',
             borderRadius: 8,
             fontSize: 12,
             fontWeight: 500,
             zIndex: 85,
-            border: '1px solid rgba(200,168,80,0.4)',
+            border: '2px solid #C8A850',
             pointerEvents: 'none',
             transform: 'translateX(-50%)',
           }}
@@ -199,19 +199,19 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#2d2d3d', borderRadius: 12, padding: 20,
+            background: '#5C4A38', borderRadius: 12, padding: 20,
             width: '80%', height: '80%', maxWidth: 1000, maxHeight: 700,
-            border: '2px solid #4d4d5d'
+            border: '2px solid #C8A850'
           }}>
             <div style={{ 
               display: 'flex', justifyContent: 'space-between', 
               alignItems: 'center', marginBottom: 16 
             }}>
-              <h3 style={{ color: '#fff', margin: 0 }}>📝 Shared Whiteboard</h3>
+              <h3 style={{ color: '#E8D8C0', margin: 0 }}>📝 Shared Whiteboard</h3>
               <button
                 onClick={closeModals}
                 style={{
-                  background: '#d63384', color: '#fff', border: 'none',
+                  background: '#8B2020', color: '#E8D8C0', border: 'none',
                   borderRadius: 6, padding: '8px 12px', cursor: 'pointer'
                 }}
               >
@@ -241,10 +241,10 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#2d2d3d', borderRadius: 12, padding: 24,
-            width: 400, border: '2px solid #4d4d5d'
+            background: '#5C4A38', borderRadius: 12, padding: 24,
+            width: 400, border: '2px solid #C8A850'
           }}>
-            <h3 style={{ color: '#fff', margin: '0 0 16px 0' }}>📺 TV Control</h3>
+            <h3 style={{ color: '#E8D8C0', margin: '0 0 16px 0' }}>📺 TV Control</h3>
             
             <input
               type="text"
@@ -253,7 +253,7 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
               onChange={e => setInteractionState(prev => ({ ...prev, tvUrl: e.target.value }))}
               style={{
                 width: '100%', padding: 12, marginBottom: 16,
-                background: '#1a1a2e', color: '#fff', border: '1px solid #3d3d4d',
+                background: '#4A3828', color: '#E8D8C0', border: '1px solid #C8A87A',
                 borderRadius: 8, fontSize: 14, outline: 'none'
               }}
               onKeyDown={e => e.key === 'Enter' && handleTVSubmit()}
@@ -263,7 +263,7 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
               <button
                 onClick={closeModals}
                 style={{
-                  background: '#6c757d', color: '#fff', border: 'none',
+                  background: '#6B4226', color: '#E8D8C0', border: 'none',
                   borderRadius: 6, padding: '10px 16px', cursor: 'pointer'
                 }}
               >
@@ -272,7 +272,7 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
               <button
                 onClick={handleTVSubmit}
                 style={{
-                  background: '#6C5CE7', color: '#fff', border: 'none',
+                  background: '#C8A850', color: '#1A0E0A', border: 'none',
                   borderRadius: 6, padding: '10px 16px', cursor: 'pointer'
                 }}
               >
@@ -291,10 +291,10 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#2d2d3d', borderRadius: 12, padding: 24,
-            width: 500, border: '2px solid #4d4d5d'
+            background: '#5C4A38', borderRadius: 12, padding: 24,
+            width: 500, border: '2px solid #C8A850'
           }}>
-            <h3 style={{ color: '#fff', margin: '0 0 20px 0' }}>🕹️ Arcade Games</h3>
+            <h3 style={{ color: '#E8D8C0', margin: '0 0 20px 0' }}>🕹️ Arcade Games</h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {['Bomberman', 'Space Invaders', 'Jump N Bump', 'Pong'].map(game => (
@@ -305,13 +305,13 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
                     closeModals();
                   }}
                   style={{
-                    background: '#3d3d4d', color: '#fff', border: '1px solid #5d5d6d',
+                    background: '#6B4226', color: '#E8D8C0', border: '1px solid #C8A87A',
                     borderRadius: 8, padding: 16, cursor: 'pointer',
                     textAlign: 'center', fontSize: 14, fontWeight: 500,
                     transition: 'all 0.15s'
                   }}
-                  onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#4d4d5d'}
-                  onMouseLeave={e => (e.target as HTMLButtonElement).style.background = '#3d3d4d'}
+                  onMouseEnter={e => (e.target as HTMLButtonElement).style.background = '#C8A850'}
+                  onMouseLeave={e => (e.target as HTMLButtonElement).style.background = '#6B4226'}
                 >
                   {game}
                 </button>
@@ -322,7 +322,7 @@ export default function InteractionOverlay({ map, users, currentUserId }: Props)
               <button
                 onClick={closeModals}
                 style={{
-                  background: '#6c757d', color: '#fff', border: 'none',
+                  background: '#6B4226', color: '#E8D8C0', border: 'none',
                   borderRadius: 6, padding: '10px 20px', cursor: 'pointer'
                 }}
               >

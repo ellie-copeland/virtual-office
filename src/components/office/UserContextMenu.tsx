@@ -110,8 +110,8 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
           position: 'fixed',
           left: position.x,
           top: position.y,
-          background: '#2d2d3d',
-          border: '1px solid #4d4d5d',
+          background: '#5C4A38',
+          border: '2px solid #C8A850',
           borderRadius: 8,
           padding: 4,
           zIndex: 200,
@@ -123,7 +123,7 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
         {/* User header */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 12px', borderBottom: '1px solid #3d3d4d',
+          padding: '8px 12px', borderBottom: '1px solid #C8A850',
           marginBottom: 4
         }}>
           <div style={{
@@ -134,11 +134,11 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
             {user.name[0]?.toUpperCase()}
           </div>
           <div>
-            <div style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>
+            <div style={{ color: '#E8D8C0', fontSize: 13, fontWeight: 600 }}>
               {user.name}
             </div>
             {user.title && (
-              <div style={{ color: '#888', fontSize: 11 }}>
+              <div style={{ color: '#D4B88A', fontSize: 11 }}>
                 {user.title}
               </div>
             )}
@@ -152,14 +152,14 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
             onClick={() => handleAction(item.id)}
             style={{
               width: '100%', padding: '8px 12px', background: 'transparent',
-              border: 'none', color: '#ddd', cursor: 'pointer',
+              border: 'none', color: '#E8D8C0', cursor: 'pointer',
               fontSize: 13, textAlign: 'left', borderRadius: 4,
               display: 'flex', alignItems: 'center', gap: 8,
               transition: 'background 0.15s',
             }}
             onMouseEnter={e => {
-              (e.target as HTMLButtonElement).style.background = item.id === 'kick' ? '#d63384' : 
-                                         item.id === 'mute' ? '#fd7e14' : '#3d3d4d';
+              (e.target as HTMLButtonElement).style.background = item.id === 'kick' ? '#8B2020' : 
+                                         item.id === 'mute' ? '#C8A850' : '#6B4226';
             }}
             onMouseLeave={e => (e.target as HTMLButtonElement).style.background = 'transparent'}
           >
@@ -177,18 +177,18 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: '#2d2d3d', borderRadius: 12, padding: 24,
-            width: 400, border: '2px solid #4d4d5d'
+            background: '#5C4A38', borderRadius: 12, padding: 24,
+            width: 400, border: '2px solid #C8A850'
           }}>
             <h3 style={{ 
-              color: '#fff', margin: '0 0 16px 0', 
+              color: '#E8D8C0', margin: '0 0 16px 0', 
               fontSize: 18, fontWeight: 600 
             }}>
               Confirm Action
             </h3>
             
             <p style={{ 
-              color: '#ddd', lineHeight: 1.5, margin: '0 0 20px 0' 
+              color: '#D4B88A', lineHeight: 1.5, margin: '0 0 20px 0' 
             }}>
               {showConfirm.message}
             </p>
@@ -197,7 +197,7 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
               <button
                 onClick={() => handleConfirm(false)}
                 style={{
-                  background: '#6c757d', color: '#fff', border: 'none',
+                  background: '#6B4226', color: '#E8D8C0', border: 'none',
                   borderRadius: 6, padding: '10px 16px', cursor: 'pointer'
                 }}
               >
@@ -206,8 +206,8 @@ export default function UserContextMenu({ user, currentUserId, currentUser, posi
               <button
                 onClick={() => handleConfirm(true)}
                 style={{
-                  background: showConfirm.action === 'kick' ? '#d63384' : '#fd7e14',
-                  color: '#fff', border: 'none',
+                  background: showConfirm.action === 'kick' ? '#8B2020' : '#C8A850',
+                  color: '#E8D8C0', border: 'none',
                   borderRadius: 6, padding: '10px 16px', cursor: 'pointer'
                 }}
               >
