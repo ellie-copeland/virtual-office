@@ -14,11 +14,12 @@ import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { WebRTCManager } from '@/lib/webrtc';
 import { calculateVolume } from '@/lib/spatial-audio';
 import { getRoomAt, getMeetingRoomBySlug } from '@/lib/map-data';
-import { User, MapData, ChatMessage, Emote, UserStatus, MeetingRoomState, ScheduledMeeting, Room } from '@/lib/types';
+import { User, MapData, ChatMessage, Emote, UserStatus, MeetingRoomState, ScheduledMeeting, Room, PROXIMITY_MAX_DISTANCE } from '@/lib/types';
 import { GameSession, GameType } from '@/lib/game-types';
 import GameLauncher from '@/components/games/GameLauncher';
 import GameLobby from '@/components/games/GameLobby';
 import GameOverlay from '@/components/games/GameOverlay';
+import MeetingRoomView from '@/components/office/MeetingRoomView';
 
 export default function OfficePage() {
   return (
@@ -49,6 +50,7 @@ function OfficeInner() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
   const [showGameLauncher, setShowGameLauncher] = useState(false);
   const [currentGameSession, setCurrentGameSession] = useState<GameSession | null>(null);
@@ -181,20 +183,53 @@ function OfficeInner() {
     };
   }, []); // eslint-disable-line
 
+  // Proximity-based WebRTC auto-connect
+  useEffect(() => {
+    if (!userId || !rtcRef.current) return;
+    const connectedPeers = new Set<string>();
+
+    const interval = setInterval(() => {
+      const me = users.find(u => u.id === userId);
+      if (!me || !rtcRef.current) return;
+
+      users.forEach(u => {
+        if (u.id === userId) return;
+        const dx = u.position.x - me.position.x;
+        const dy = u.position.y - me.position.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < PROXIMITY_MAX_DISTANCE) {
+          if (!connectedPeers.has(u.id)) {
+            rtcRef.current!.connectToPeer(u.id);
+            connectedPeers.add(u.id);
+          }
+        } else {
+          if (connectedPeers.has(u.id)) {
+            rtcRef.current!.disconnectPeer(u.id);
+            connectedPeers.delete(u.id);
+          }
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [userId, users]);
+
   // Spatial audio: update volume for remote streams
+  const [peerVolumes, setPeerVolumes] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!userId || !mapData) return;
     const me = users.find(u => u.id === userId);
     if (!me) return;
 
+    const vols: Record<string, number> = {};
     remoteStreams.forEach((stream, peerId) => {
       const peer = users.find(u => u.id === peerId);
       if (!peer) return;
       const vol = calculateVolume(me.position, me.roomId, peer.position, peer.roomId, mapData.rooms);
-      stream.getAudioTracks().forEach(track => {
-        (track as MediaStreamTrack & { _gainNode?: GainNode }).enabled = vol > 0;
-      });
+      vols[peerId] = vol;
     });
+    setPeerVolumes(vols);
   }, [users, userId, mapData, remoteStreams]);
 
   const handleMove = useCallback((x: number, y: number) => {
@@ -307,6 +342,28 @@ function OfficeInner() {
   const currentRoom = me?.roomId ? mapData.rooms.find(r => r.id === me.roomId) : null;
   const isInMeetingRoom = currentRoom?.type === 'meeting';
 
+  // Show meeting room view when in a meeting room (unless playing a game)
+  if (isInMeetingRoom && currentRoom && !activeGame) {
+    return (
+      <MeetingRoomView
+        room={currentRoom}
+        roomState={meetingRoomStates[currentRoom.id] || null}
+        users={users}
+        currentUserId={userId}
+        remoteStreams={remoteStreams}
+        localStream={localStream}
+        isMuted={isMuted}
+        isCameraOn={isCameraOn}
+        isScreenSharing={isScreenSharing}
+        onToggleMic={handleToggleMic}
+        onToggleCamera={handleToggleCamera}
+        onToggleScreenShare={handleToggleScreenShare}
+        onLeaveRoom={handleLeaveRoom}
+        onCopyLink={() => {}}
+      />
+    );
+  }
+
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#1a1a2e' }}>
       {/* Meeting bar when in a meeting room */}
@@ -330,6 +387,7 @@ function OfficeInner() {
         meetingRoomStates={meetingRoomStates}
         scheduledMeetings={scheduledMeetings}
         onMove={handleMove}
+        onCameraChange={(x, y) => setCameraOffset({ x, y })}
       />
       <UserList users={users} currentUserId={userId} />
       <MiniMap map={mapData} users={users} currentUserId={userId} />
@@ -338,7 +396,8 @@ function OfficeInner() {
         currentUserId={userId}
         remoteStreams={remoteStreams}
         localStream={localStream}
-        cameraOffset={{ x: 0, y: 0 }}
+        cameraOffset={cameraOffset}
+        volumes={peerVolumes}
       />
       <ChatPanel
         isOpen={isChatOpen}

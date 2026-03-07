@@ -8,19 +8,20 @@
     "start": "NODE_ENV=production node server.ts"
   },
   "dependencies": {
+    "googleapis": "^130.0.0",
     "next": "^14.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "simple-peer": "^9.11.1",
     "socket.io": "^4.7.0",
-    "socket.io-client": "^4.7.0",
-    "simple-peer": "^9.11.1"
+    "socket.io-client": "^4.7.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/simple-peer": "^9.11.0",
-    "typescript": "^5.0.0",
-    "tsx": "^4.0.0"
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
   }
 }

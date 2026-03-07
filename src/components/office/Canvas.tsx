@@ -18,6 +18,7 @@ interface Props {
   meetingRoomStates: Record<string, MeetingRoomState>;
   scheduledMeetings: ScheduledMeeting[];
   onMove: (x: number, y: number) => void;
+  onCameraChange?: (x: number, y: number) => void;
 }
 
 const KEYS_DOWN = new Set<string>();
@@ -825,7 +826,7 @@ function drawOffscreenArrows(
 // MAIN COMPONENT
 // ========================
 
-export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove }: Props) {
+export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove, onCameraChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraRef = useRef({ x: 0, y: 0 });
   const playerPosRef = useRef({ x: 20, y: 13 });
@@ -920,6 +921,9 @@ export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove
       const targetCamY = playerPosRef.current.y * TILE_SIZE - canvas.height / 2;
       cam.x += (targetCamX - cam.x) * 0.08;
       cam.y += (targetCamY - cam.y) * 0.08;
+
+      // Report camera position for video overlay positioning
+      if (onCameraChange) onCameraChange(cam.x, cam.y);
 
       // Clear
       ctx.fillStyle = '#1a1a2e';

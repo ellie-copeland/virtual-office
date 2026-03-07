@@ -9,126 +9,110 @@ interface Props {
   remoteStreams: Map<string, MediaStream>;
   localStream: MediaStream | null;
   cameraOffset: { x: number; y: number };
-  volumes?: Map<string, number>;
+  volumes?: Record<string, number>;
 }
 
-export default function VideoOverlay({ users, currentUserId, remoteStreams, localStream, cameraOffset, volumes }: Props) {
-  const me = users.find(u => u.id === currentUserId);
-
-  // Collect users who have camera/screen on and are nearby
+export default function VideoOverlay({ users, currentUserId, remoteStreams, localStream, cameraOffset, volumes = {} }: Props) {
+  // Show video bubbles for nearby users with cameras on
   const nearbyUsers = users.filter(u => {
-    if (!u.isCameraOn && !u.isScreenSharing) return false;
+    if (u.id === currentUserId && !localStream) return false;
+    if (u.id !== currentUserId && !u.isCameraOn) return false;
+    const me = users.find(uu => uu.id === currentUserId);
     if (!me) return false;
+    if (u.id === currentUserId) return localStream !== null;
     const dx = u.position.x - me.position.x;
     const dy = u.position.y - me.position.y;
     return Math.sqrt(dx * dx + dy * dy) < 8;
   });
 
-  // Also render audio-only elements for remote streams with audio but no video display
-  const audioOnlyUsers = Array.from(remoteStreams.entries()).filter(([uid]) => {
-    // Not already shown as video bubble
-    return !nearbyUsers.find(u => u.id === uid);
+  // Audio-only users (unmuted, no camera, nearby)
+  const audioOnlyUsers = users.filter(u => {
+    if (u.id === currentUserId) return false;
+    if (u.isCameraOn) return false; // already handled by video
+    if (u.isMuted) return false;
+    const me = users.find(uu => uu.id === currentUserId);
+    if (!me) return false;
+    const dx = u.position.x - me.position.x;
+    const dy = u.position.y - me.position.y;
+    return Math.sqrt(dx * dx + dy * dy) < 8 && remoteStreams.has(u.id);
   });
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}>
+      {/* Video bubbles */}
       {nearbyUsers.map(user => {
-        const isLocal = user.id === currentUserId;
-        const stream = isLocal ? localStream : remoteStreams.get(user.id);
+        const stream = user.id === currentUserId ? localStream : remoteStreams.get(user.id);
         if (!stream) return null;
-        const screenX = user.position.x * TILE_SIZE - cameraOffset.x;
-        const screenY = user.position.y * TILE_SIZE - cameraOffset.y - 80;
+        const isLocal = user.id === currentUserId;
         return (
           <VideoBubble
             key={user.id}
             stream={stream}
-            x={screenX}
-            y={screenY}
-            name={user.name}
-            color={user.color}
+            user={user}
+            cameraOffset={cameraOffset}
             isLocal={isLocal}
-            isScreenShare={user.isScreenSharing ?? false}
-            volume={volumes?.get(user.id) ?? 1}
+            volume={isLocal ? 0 : (volumes[user.id] ?? 1)}
           />
         );
       })}
-      {/* Hidden audio elements for remote users who have audio but no video bubble shown */}
-      {audioOnlyUsers.map(([uid, stream]) => (
-        <AudioOnly
-          key={`audio-${uid}`}
-          stream={stream}
-          volume={volumes?.get(uid) ?? 1}
-        />
+
+      {/* Hidden audio elements for all remote streams (ensures audio plays) */}
+      {Array.from(remoteStreams.entries()).map(([peerId, stream]) => (
+        <RemoteAudio key={peerId} stream={stream} volume={volumes[peerId] ?? 1} />
       ))}
     </div>
   );
 }
 
-function AudioOnly({ stream, volume }: { stream: MediaStream; volume: number }) {
+function RemoteAudio({ stream, volume }: { stream: MediaStream; volume: number }) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (audioRef.current && stream) {
       audioRef.current.srcObject = stream;
-    }
-  }, [stream]);
-
-  useEffect(() => {
-    if (audioRef.current) {
       audioRef.current.volume = Math.max(0, Math.min(1, volume));
     }
-  }, [volume]);
+  }, [stream, volume]);
 
   return <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />;
 }
 
-function VideoBubble({ stream, x, y, name, color, isLocal, isScreenShare, volume }: {
-  stream: MediaStream; x: number; y: number; name: string; color: string;
-  isLocal: boolean; isScreenShare: boolean; volume: number;
+function VideoBubble({ stream, user, cameraOffset, isLocal, volume }: {
+  stream: MediaStream; user: User; cameraOffset: { x: number; y: number }; isLocal: boolean; volume: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-    // For remote streams, also attach audio separately to control volume
-    if (!isLocal && audioRef.current && stream) {
-      audioRef.current.srcObject = stream;
-    }
-  }, [stream, isLocal]);
+  }, [stream]);
 
-  useEffect(() => {
-    if (!isLocal && audioRef.current) {
-      audioRef.current.volume = Math.max(0, Math.min(1, volume));
-    }
-  }, [volume, isLocal]);
-
-  const size = isScreenShare ? 200 : 80;
+  const screenX = user.position.x * TILE_SIZE - cameraOffset.x + (typeof window !== 'undefined' ? window.innerWidth / 2 : 400);
+  const screenY = user.position.y * TILE_SIZE - cameraOffset.y + (typeof window !== 'undefined' ? window.innerHeight / 2 : 300) - 80;
 
   return (
     <div style={{
-      position: 'absolute', left: x - size / 2, top: y - size / 2,
-      width: size, height: size, pointerEvents: 'auto',
+      position: 'absolute', left: screenX - 40, top: screenY - 40,
+      width: 80, height: 80, pointerEvents: 'auto',
     }}>
       <video
         ref={videoRef}
         autoPlay
-        muted={true}  /* Always mute the video element; audio handled separately */
+        muted={isLocal} // Only mute local preview to prevent echo
         playsInline
         style={{
-          width: size, height: size,
-          borderRadius: isScreenShare ? 8 : '50%',
-          objectFit: 'cover',
-          border: `3px solid ${color}`,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          width: 80, height: 80, borderRadius: '50%', objectFit: 'cover',
+          border: `3px solid ${user.color}`,
+          boxShadow: user.isSpeaking ? `0 0 12px ${user.color}` : '0 4px 12px rgba(0,0,0,0.4)',
+          transform: isLocal ? 'scaleX(-1)' : 'none',
         }}
       />
-      {/* Separate audio element for remote streams so we can control volume */}
-      {!isLocal && (
-        <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
-      )}
+      <div style={{
+        position: 'absolute', bottom: -18, left: '50%', transform: 'translateX(-50%)',
+        background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 10, padding: '2px 6px',
+        borderRadius: 4, whiteSpace: 'nowrap',
+      }}>{user.name}</div>
     </div>
   );
 }
