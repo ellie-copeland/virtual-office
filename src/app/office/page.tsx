@@ -98,19 +98,17 @@ function OfficeInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Check for JWT token first (new auth system)
+    // Determine auth method
     const token = localStorage.getItem('vo-token');
-    if (token) {
-      const socket = connectSocket(token);
-      socketRef.current = socket;
-    } else {
-      // Fallback to legacy system
-      const saved = localStorage.getItem('vo-user');
-      if (!saved) { router.push('/'); return; }
+    const saved = localStorage.getItem('vo-user');
 
-      const userData = JSON.parse(saved);
-      const socket = connectSocket();
-      socketRef.current = socket;
+    if (!token && !saved) {
+      router.push('/');
+      return;
+    }
+
+    const socket = connectSocket(token || undefined);
+    socketRef.current = socket;
 
     socket.on('init', (data: {
       userId: string;
@@ -133,10 +131,8 @@ function OfficeInner() {
         teleportedRef.current = true;
         const targetRoom = getMeetingRoomBySlug(data.map, roomSlug);
         if (targetRoom) {
-          // Teleport to center of room
           const tx = targetRoom.bounds.x + Math.floor(targetRoom.bounds.width / 2);
           const ty = targetRoom.bounds.y + Math.floor(targetRoom.bounds.height / 2);
-          // Find a walkable spot near center
           socket.emit('move', { x: tx, y: ty });
         }
       }
@@ -191,7 +187,6 @@ function OfficeInner() {
       setTimeout(() => setEmotes(prev => prev.filter(e => e !== emote)), 3500);
     });
 
-    // Meeting room events
     socket.on('meeting:room-updated', (state: MeetingRoomState) => {
       setMeetingRoomStates(prev => ({ ...prev, [state.roomId]: state }));
     });
@@ -206,7 +201,6 @@ function OfficeInner() {
       setActiveGame({ id: gameId, type });
     });
 
-    // New socket events
     socket.on('desk:claimed', (data: { tileKey: string; userId: string; userName: string; userColor: string }) => {
       setDeskClaims(prev => [...prev.filter(d => d.tileKey !== data.tileKey), data]);
     });
@@ -225,29 +219,23 @@ function OfficeInner() {
         startTime: Date.now(),
       };
       setReactionBubbles(prev => [...prev, bubble]);
-      
-      // Clean up after 2 seconds
       setTimeout(() => {
         setReactionBubbles(prev => prev.filter(b => b.id !== bubble.id));
       }, 2000);
     });
 
-      // Handle auth-required event
-      socket.on('auth:required', () => {
-        localStorage.removeItem('vo-token');
-        localStorage.removeItem('vo-user-data');
-        router.push('/');
-      });
+    socket.on('auth:required', () => {
+      localStorage.removeItem('vo-token');
+      localStorage.removeItem('vo-user-data');
+      router.push('/');
+    });
 
-      // Join with appropriate data based on auth method
-      if (token) {
-        // JWT auth - socket will get user data from token
-        socket.emit('join', {});
-      } else {
-        // Legacy auth
-        const userData = JSON.parse(saved);
-        socket.emit('join', { name: userData.name, color: userData.color, title: userData.title });
-      }
+    // Join with appropriate data based on auth method
+    if (token) {
+      socket.emit('join', {});
+    } else {
+      const userData = JSON.parse(saved!);
+      socket.emit('join', { name: userData.name, color: userData.color, title: userData.title });
     }
 
     return () => {
