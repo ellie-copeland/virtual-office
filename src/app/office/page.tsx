@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import OfficeCanvas from '@/components/office/Canvas';
 import Toolbar from '@/components/office/Toolbar';
 import ChatPanel from '@/components/office/ChatPanel';
 import UserList from '@/components/office/UserList';
 import VideoOverlay from '@/components/office/VideoOverlay';
 import MiniMap from '@/components/office/MiniMap';
+import MeetingBar from '@/components/office/MeetingBar';
+import MeetingScheduler from '@/components/office/MeetingScheduler';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { WebRTCManager } from '@/lib/webrtc';
 import { calculateVolume } from '@/lib/spatial-audio';
-import { getRoomAt } from '@/lib/map-data';
-import { User, MapData, ChatMessage, Emote, UserStatus } from '@/lib/types';
+import { getRoomAt, getMeetingRoomBySlug } from '@/lib/map-data';
+import { User, MapData, ChatMessage, Emote, UserStatus, MeetingRoomState, ScheduledMeeting, Room } from '@/lib/types';
 import { GameSession, GameType } from '@/lib/game-types';
 import GameLauncher from '@/components/games/GameLauncher';
 import GameLobby from '@/components/games/GameLobby';
@@ -20,6 +22,7 @@ import GameOverlay from '@/components/games/GameOverlay';
 
 export default function OfficePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [mapData, setMapData] = useState<MapData | null>(null);
@@ -37,8 +40,22 @@ export default function OfficePage() {
   const [currentGameSession, setCurrentGameSession] = useState<GameSession | null>(null);
   const [activeGame, setActiveGame] = useState<{ id: string; type: GameType } | null>(null);
 
+  // Meeting room state
+  const [meetingRoomStates, setMeetingRoomStates] = useState<Record<string, MeetingRoomState>>({});
+  const [scheduledMeetings, setScheduledMeetings] = useState<ScheduledMeeting[]>([]);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
+
   const socketRef = useRef<ReturnType<typeof connectSocket> | null>(null);
   const rtcRef = useRef<WebRTCManager | null>(null);
+  const teleportedRef = useRef(false);
+
+  // Check calendar connection on mount
+  useEffect(() => {
+    if (searchParams.get('calendar') === 'connected') {
+      setIsCalendarConnected(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const saved = localStorage.getItem('vo-user');
@@ -48,11 +65,34 @@ export default function OfficePage() {
     const socket = connectSocket();
     socketRef.current = socket;
 
-    socket.on('init', (data: { userId: string; users: User[]; chatHistory: ChatMessage[]; map: MapData }) => {
+    socket.on('init', (data: {
+      userId: string;
+      users: User[];
+      chatHistory: ChatMessage[];
+      map: MapData;
+      meetingRoomStates: Record<string, MeetingRoomState>;
+      scheduledMeetings: ScheduledMeeting[];
+    }) => {
       setUserId(data.userId);
       setUsers(data.users);
       setMessages(data.chatHistory);
       setMapData(data.map);
+      if (data.meetingRoomStates) setMeetingRoomStates(data.meetingRoomStates);
+      if (data.scheduledMeetings) setScheduledMeetings(data.scheduledMeetings);
+
+      // Handle room link teleportation
+      const roomSlug = searchParams.get('room');
+      if (roomSlug && !teleportedRef.current && data.map) {
+        teleportedRef.current = true;
+        const targetRoom = getMeetingRoomBySlug(data.map, roomSlug);
+        if (targetRoom) {
+          // Teleport to center of room
+          const tx = targetRoom.bounds.x + Math.floor(targetRoom.bounds.width / 2);
+          const ty = targetRoom.bounds.y + Math.floor(targetRoom.bounds.height / 2);
+          // Find a walkable spot near center
+          socket.emit('move', { x: tx, y: ty });
+        }
+      }
 
       // Setup WebRTC
       rtcRef.current = new WebRTCManager(
@@ -104,6 +144,15 @@ export default function OfficePage() {
       setTimeout(() => setEmotes(prev => prev.filter(e => e !== emote)), 3500);
     });
 
+    // Meeting room events
+    socket.on('meeting:room-updated', (state: MeetingRoomState) => {
+      setMeetingRoomStates(prev => ({ ...prev, [state.roomId]: state }));
+    });
+
+    socket.on('meeting:scheduled', (meetings: ScheduledMeeting[]) => {
+      setScheduledMeetings(meetings);
+    });
+
     socket.on('game:started', ({ gameId, type }: { gameId: string; type: GameType }) => {
       setCurrentGameSession(null);
       setShowGameLauncher(false);
@@ -128,7 +177,6 @@ export default function OfficePage() {
       const peer = users.find(u => u.id === peerId);
       if (!peer) return;
       const vol = calculateVolume(me.position, me.roomId, peer.position, peer.roomId, mapData.rooms);
-      // Apply volume to audio tracks
       stream.getAudioTracks().forEach(track => {
         (track as MediaStreamTrack & { _gainNode?: GainNode }).enabled = vol > 0;
       });
@@ -206,6 +254,27 @@ export default function OfficePage() {
     });
   }, [users, userId]);
 
+  const handleLeaveRoom = useCallback(() => {
+    if (!mapData) return;
+    // Teleport to lobby/spawn
+    const spawn = mapData.spawnPoints[0];
+    if (spawn) {
+      socketRef.current?.emit('move', { x: spawn.x, y: spawn.y });
+      // Force local position update
+      setUsers(prev => prev.map(u =>
+        u.id === userId ? { ...u, position: spawn, roomId: getRoomAt(mapData, spawn.x, spawn.y) } : u
+      ));
+    }
+  }, [mapData, userId]);
+
+  const handleScheduleMeeting = useCallback((meeting: Omit<ScheduledMeeting, 'id'>) => {
+    socketRef.current?.emit('meeting:schedule', meeting);
+  }, []);
+
+  const handleConnectCalendar = useCallback(() => {
+    window.location.href = '/api/calendar';
+  }, []);
+
   if (!mapData || !userId) {
     return (
       <div style={{
@@ -221,14 +290,31 @@ export default function OfficePage() {
   }
 
   const me = users.find(u => u.id === userId);
+  const currentRoom = me?.roomId ? mapData.rooms.find(r => r.id === me.roomId) : null;
+  const isInMeetingRoom = currentRoom?.type === 'meeting';
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#1a1a2e' }}>
+      {/* Meeting bar when in a meeting room */}
+      {isInMeetingRoom && currentRoom && (
+        <MeetingBar
+          room={currentRoom}
+          users={users}
+          currentUserId={userId}
+          meetingState={meetingRoomStates[currentRoom.id] || null}
+          scheduledMeetings={scheduledMeetings}
+          onLeaveRoom={handleLeaveRoom}
+          onSchedule={() => setShowScheduler(true)}
+        />
+      )}
+
       <OfficeCanvas
         map={mapData}
         users={users}
         currentUserId={userId}
         emotes={emotes}
+        meetingRoomStates={meetingRoomStates}
+        scheduledMeetings={scheduledMeetings}
         onMove={handleMove}
       />
       <UserList users={users} currentUserId={userId} />
@@ -263,6 +349,19 @@ export default function OfficePage() {
         onOpenGames={() => setShowGameLauncher(true)}
       />
 
+      {/* Meeting Scheduler */}
+      {showScheduler && (
+        <MeetingScheduler
+          rooms={mapData.rooms}
+          currentRoomId={me?.roomId ?? null}
+          scheduledMeetings={scheduledMeetings}
+          onSchedule={handleScheduleMeeting}
+          onClose={() => setShowScheduler(false)}
+          isCalendarConnected={isCalendarConnected}
+          onConnectCalendar={handleConnectCalendar}
+        />
+      )}
+
       {/* Game UI */}
       {showGameLauncher && socketRef.current && (
         <GameLauncher
@@ -278,7 +377,7 @@ export default function OfficePage() {
         <GameLobby
           socket={socketRef.current}
           session={currentGameSession}
-          onStart={() => {}} // game:started handler handles transition
+          onStart={() => {}}
           onLeave={() => {
             socketRef.current?.emit('game:leave', { gameId: currentGameSession.id });
             setCurrentGameSession(null);

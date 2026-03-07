@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import next from 'next';
-import { Server as SocketServer } from 'socket.io';
-import { User, ChatMessage, Position, UserStatus } from './src/lib/types';
+import { Server as SocketServer, Socket } from 'socket.io';
+import type { User, ChatMessage, Position, UserStatus, MeetingRoomState, ScheduledMeeting } from './src/lib/types';
 import { defaultMap, getRoomAt } from './src/lib/map-data';
 import { setupGameServer } from './src/server/game-server';
 
@@ -13,6 +13,49 @@ const PORT = parseInt(process.env.PORT || '3333', 10);
 const users = new Map<string, User>();
 const chatHistory: ChatMessage[] = [];
 const MAX_CHAT_HISTORY = 200;
+
+// Meeting room state tracking
+const meetingRoomStates = new Map<string, MeetingRoomState>();
+const scheduledMeetings: ScheduledMeeting[] = [];
+
+// Initialize meeting room states
+for (const room of defaultMap.rooms) {
+  if (room.type === 'meeting') {
+    meetingRoomStates.set(room.id, {
+      roomId: room.id,
+      occupants: [],
+      meetingStartedAt: null,
+    });
+  }
+}
+
+function handleMeetingRoomChange(io: SocketServer, userId: string, oldRoomId: string | null, newRoomId: string | null) {
+  // Leave old meeting room
+  if (oldRoomId) {
+    const state = meetingRoomStates.get(oldRoomId);
+    if (state) {
+      state.occupants = state.occupants.filter(id => id !== userId);
+      if (state.occupants.length === 0) {
+        state.meetingStartedAt = null;
+      }
+      io.emit('meeting:room-updated', state);
+    }
+  }
+
+  // Join new meeting room
+  if (newRoomId) {
+    const state = meetingRoomStates.get(newRoomId);
+    if (state) {
+      if (!state.occupants.includes(userId)) {
+        state.occupants.push(userId);
+      }
+      if (state.occupants.length === 1 && !state.meetingStartedAt) {
+        state.meetingStartedAt = Date.now();
+      }
+      io.emit('meeting:room-updated', state);
+    }
+  }
+}
 
 app.prepare().then(() => {
   const server = createServer((req, res) => {
@@ -50,6 +93,8 @@ app.prepare().then(() => {
         users: Array.from(users.values()),
         chatHistory: chatHistory.slice(-50),
         map: defaultMap,
+        meetingRoomStates: Object.fromEntries(meetingRoomStates),
+        scheduledMeetings,
       });
 
       // Broadcast new user
@@ -59,9 +104,35 @@ app.prepare().then(() => {
     socket.on('move', (pos: Position) => {
       const user = users.get(socket.id);
       if (!user) return;
+      const oldRoomId = user.roomId;
       user.position = pos;
       user.roomId = getRoomAt(defaultMap, Math.round(pos.x), Math.round(pos.y));
       socket.broadcast.emit('user:moved', { id: socket.id, position: pos, roomId: user.roomId });
+
+      // Handle meeting room enter/leave
+      if (oldRoomId !== user.roomId) {
+        handleMeetingRoomChange(io, socket.id, oldRoomId, user.roomId);
+      }
+    });
+
+    // Request current meeting room states
+    socket.on('meeting:states', () => {
+      socket.emit('meeting:states', Object.fromEntries(meetingRoomStates));
+    });
+
+    // Request scheduled meetings
+    socket.on('meeting:scheduled', () => {
+      socket.emit('meeting:scheduled', scheduledMeetings);
+    });
+
+    // Schedule a meeting
+    socket.on('meeting:schedule', (meeting: Omit<ScheduledMeeting, 'id'>) => {
+      const scheduled: ScheduledMeeting = {
+        ...meeting,
+        id: `mtg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      };
+      scheduledMeetings.push(scheduled);
+      io.emit('meeting:scheduled', scheduledMeetings);
     });
 
     socket.on('status', (status: UserStatus) => {
@@ -120,6 +191,10 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => {
       console.log(`[socket] disconnected: ${socket.id}`);
+      const user = users.get(socket.id);
+      if (user?.roomId) {
+        handleMeetingRoomChange(io, socket.id, user.roomId, null);
+      }
       users.delete(socket.id);
       io.emit('user:left', socket.id);
     });
