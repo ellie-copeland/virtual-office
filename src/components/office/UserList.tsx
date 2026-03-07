@@ -5,13 +5,14 @@ import { User } from '@/lib/types';
 interface Props {
   users: User[];
   currentUserId: string;
+  onUserRightClick?: (user: User, event: React.MouseEvent) => void;
 }
 
 const STATUS_ICONS: Record<string, string> = {
   available: '🟢', busy: '🔴', away: '🟡', 'in-meeting': '🔵',
 };
 
-export default function UserList({ users, currentUserId }: Props) {
+export default function UserList({ users, currentUserId, onUserRightClick }: Props) {
   const sorted = [...users].sort((a, b) => {
     if (a.id === currentUserId) return -1;
     if (b.id === currentUserId) return 1;
@@ -20,7 +21,7 @@ export default function UserList({ users, currentUserId }: Props) {
 
   return (
     <div style={{
-      position: 'fixed', left: 0, top: 0, bottom: 72, width: 220,
+      position: 'fixed', left: 0, top: 0, bottom: 136, width: 220,
       background: '#2d2d3d', borderRight: '1px solid #3d3d4d',
       display: 'flex', flexDirection: 'column', zIndex: 90,
     }}>
@@ -32,11 +33,31 @@ export default function UserList({ users, currentUserId }: Props) {
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
         {sorted.map(user => (
-          <div key={user.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-            borderRadius: 10, marginBottom: 2, transition: 'background 0.15s',
-            background: user.id === currentUserId ? 'rgba(108,92,231,0.15)' : 'transparent',
-          }}>
+          <div key={user.id} 
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+              borderRadius: 10, marginBottom: 2, transition: 'background 0.15s',
+              background: user.id === currentUserId ? 'rgba(108,92,231,0.15)' : 'transparent',
+              cursor: user.id !== currentUserId && onUserRightClick ? 'pointer' : 'default',
+            }}
+            onContextMenu={(e) => {
+              if (user.id !== currentUserId && onUserRightClick) {
+                e.preventDefault();
+                onUserRightClick(user, e);
+              }
+            }}
+            onMouseEnter={(e) => {
+              if (user.id !== currentUserId) {
+                (e.target as HTMLElement).style.background = 'rgba(61,61,77,0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (user.id !== currentUserId) {
+                (e.target as HTMLElement).style.background = 'transparent';
+              } else {
+                (e.target as HTMLElement).style.background = 'rgba(108,92,231,0.15)';
+              }
+            }}>
             <div style={{
               width: 32, height: 32, borderRadius: '50%', background: user.color,
               display: 'flex', alignItems: 'center', justifyContent: 'center',

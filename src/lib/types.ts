@@ -51,7 +51,7 @@ export interface MapData {
   furniture: Furniture[];
 }
 
-export type UserStatus = 'available' | 'busy' | 'away' | 'in-meeting';
+export type UserStatus = 'available' | 'busy' | 'away' | 'in-meeting' | 'ghost' | 'dnd';
 
 export interface User {
   id: string;
@@ -66,6 +66,56 @@ export interface User {
   isCameraOn: boolean;
   isSpeaking: boolean;
   isScreenSharing: boolean;
+}
+
+// Persistent user account (stored in users.json)
+export interface PersistentUser {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  color: string;
+  title?: string;
+  avatar?: string; // URL or base64
+  deskId?: string; // assigned desk tile key
+  role: 'admin' | 'member';
+  createdAt: number;
+  // Persistent settings
+  settings: {
+    defaultMuted: boolean;
+    defaultCamera: boolean;
+    theme?: 'light' | 'dark';
+  };
+}
+
+// Auth token payload
+export interface AuthTokenPayload {
+  userId: string;
+  email: string;
+  role: 'admin' | 'member';
+  iat?: number;
+  exp?: number;
+}
+
+// Login/Register request types
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  color: string;
+  title?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  token?: string;
+  user?: PersistentUser;
+  error?: string;
 }
 
 export interface ChatMessage {
@@ -184,4 +234,97 @@ export interface MeetingRoom {
 export interface SignalData {
   userId: string;
   signal: unknown;
+}
+
+// Interactive Objects
+export interface InteractiveObjectState {
+  tileKey: string; // `${x}-${y}`
+  tileType: number;
+  state: WhiteboardState | TVState | ArcadeState | {};
+}
+
+export interface WhiteboardState {
+  strokes: WhiteboardStroke[];
+  lastModified: number;
+}
+
+export interface WhiteboardStroke {
+  id: string;
+  points: { x: number; y: number }[];
+  color: string;
+  width: number;
+  timestamp: number;
+  userId: string;
+}
+
+export interface TVState {
+  currentUrl?: string;
+  lastModified: number;
+  controlledBy?: string;
+}
+
+export interface ArcadeState {
+  currentGame?: string;
+  players: string[];
+  lastModified: number;
+}
+
+// DM/Direct Messaging
+export interface DMTypingEvent {
+  senderId: string;
+  recipientId: string;
+  isTyping: boolean;
+}
+
+export interface DMReadReceipt {
+  messageId: string;
+  senderId: string;
+  recipientId: string;
+  readAt: number;
+}
+
+export interface DMUnreadCount {
+  userId: string;
+  unreadCounts: Record<string, number>; // otherUserId -> count
+}
+
+// Desk Assignments
+export interface DeskAssignment {
+  tileKey: string; // `${x}-${y}`
+  userId: string;
+  assignedAt: number;
+}
+
+// Spotlight/Follow Mode
+export interface SpotlightState {
+  userId: string;
+  startedAt: number;
+}
+
+export interface FollowState {
+  followerId: string;
+  targetId: string;
+  startedAt: number;
+}
+
+// Admin Controls
+export interface RoomLockState {
+  roomId: string;
+  isLocked: boolean;
+  lockedBy: string;
+  lockedAt: number;
+}
+
+// Reactions
+export interface Reaction {
+  userId: string;
+  emoji: string;
+  timestamp: number;
+  position: Position;
+}
+
+// Status Messages
+export interface StatusMessageEvent {
+  userId: string;
+  message: string;
 }

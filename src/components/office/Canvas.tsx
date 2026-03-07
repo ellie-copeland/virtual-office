@@ -10,6 +10,22 @@ import {
   TILE_ARCADE, MeetingRoomState, ScheduledMeeting,
 } from '@/lib/types';
 
+interface DeskClaim {
+  tileKey: string;
+  userId: string;
+  userName: string;
+  userColor: string;
+}
+
+interface ReactionBubble {
+  id: string;
+  userId: string;
+  emoji: string;
+  x: number;
+  y: number;
+  startTime: number;
+}
+
 interface Props {
   map: MapData;
   users: User[];
@@ -17,6 +33,8 @@ interface Props {
   emotes: Emote[];
   meetingRoomStates: Record<string, MeetingRoomState>;
   scheduledMeetings: ScheduledMeeting[];
+  deskClaims?: DeskClaim[];
+  reactionBubbles?: ReactionBubble[];
   onMove: (x: number, y: number) => void;
   onCameraChange?: (x: number, y: number) => void;
 }
@@ -358,7 +376,7 @@ function drawDoor(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
   ctx.fillRect(x + 5, y + 3, s - 10, s - 5);
 }
 
-function drawDesk(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
+function drawDesk(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, deskClaim?: DeskClaim) {
   // Desk body (rich wood)
   px(ctx, x + 1, y + 5, s - 2, s - 7, PAL.deskDark);
   // Desktop surface (lighter top)
@@ -395,6 +413,42 @@ function drawDesk(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
   px(ctx, x + 3, y + 6, 4, 5, '#E8D8C0');
   px(ctx, x + 3, y + 6, 4, 1, '#F0E8D8');
   px(ctx, x + 4, y + 5, 2, 1, 'rgba(160,80,40,0.6)'); // coffee inside
+
+  // Draw nameplate if desk is claimed
+  if (deskClaim) {
+    drawDeskNameplate(ctx, x, y, s, deskClaim);
+  }
+}
+
+function drawDeskNameplate(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, deskClaim: DeskClaim) {
+  const nameplateName = deskClaim.userName;
+  const nameplateY = y - 8; // Position above the desk
+  const nameplateX = x + s / 2; // Center horizontally
+  
+  // Set font for measuring
+  ctx.font = 'bold 10px monospace';
+  const textWidth = ctx.measureText(nameplateName).width;
+  const plateWidth = Math.max(textWidth + 8, 40);
+  const plateHeight = 12;
+  
+  // Nameplate background
+  ctx.fillStyle = PAL.labelBg;
+  ctx.fillRect(nameplateX - plateWidth / 2, nameplateY - plateHeight / 2, plateWidth, plateHeight);
+  
+  // Nameplate border
+  ctx.strokeStyle = 'rgba(200,168,80,0.4)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(nameplateX - plateWidth / 2, nameplateY - plateHeight / 2, plateWidth, plateHeight);
+  
+  // User color indicator (small dot)
+  ctx.fillStyle = deskClaim.userColor;
+  ctx.fillRect(nameplateX - plateWidth / 2 + 3, nameplateY - 2, 4, 4);
+  
+  // Name text
+  ctx.fillStyle = PAL.labelText;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(nameplateName, nameplateX, nameplateY);
 }
 
 function drawChair(ctx: CanvasRenderingContext2D, x: number, y: number, s: number) {
@@ -760,7 +814,7 @@ function drawArcade(ctx: CanvasRenderingContext2D, x: number, y: number, s: numb
   px(ctx, x + s / 2 - 2, y + s - 4, 4, 2, PAL.gold);
 }
 
-function drawTile(ctx: CanvasRenderingContext2D, tile: number, x: number, y: number, s: number, time: number, map: MapData, gx: number, gy: number) {
+function drawTile(ctx: CanvasRenderingContext2D, tile: number, x: number, y: number, s: number, time: number, map: MapData, gx: number, gy: number, deskClaims?: DeskClaim[]) {
   switch (tile) {
     case TILE_VOID:
       ctx.fillStyle = PAL.voidDeep;
@@ -774,7 +828,11 @@ function drawTile(ctx: CanvasRenderingContext2D, tile: number, x: number, y: num
     case TILE_FLOOR: drawFloorTile(ctx, x, y, s); break;
     case TILE_WALL: drawWall(ctx, x, y, s, map, gx, gy); break;
     case TILE_DOOR: drawDoor(ctx, x, y, s, time); break;
-    case TILE_DESK: drawDesk(ctx, x, y, s); break;
+    case TILE_DESK: 
+      const deskKey = `${gx}-${gy}`;
+      const deskClaim = deskClaims?.find(claim => claim.tileKey === deskKey);
+      drawDesk(ctx, x, y, s, deskClaim); 
+      break;
     case TILE_CHAIR: drawChair(ctx, x, y, s); break;
     case TILE_COUCH: drawCouch(ctx, x, y, s); break;
     case TILE_PLANT: {
@@ -1206,7 +1264,40 @@ function drawOffscreenArrows(
 // MAIN COMPONENT
 // ====================================
 
-export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove, onCameraChange }: Props) {
+function drawReactionBubbles(ctx: CanvasRenderingContext2D, reactionBubbles: ReactionBubble[], time: number) {
+  const now = time;
+  
+  reactionBubbles.forEach(bubble => {
+    const age = now - bubble.startTime;
+    const duration = 2000; // 2 seconds
+    
+    if (age > duration) return;
+    
+    const progress = age / duration;
+    const alpha = 1 - progress;
+    const yOffset = -progress * 40; // Rise 40 pixels
+    
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Optional: Add a glow effect
+    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+    ctx.shadowBlur = 4;
+    
+    ctx.fillText(
+      bubble.emoji,
+      bubble.x * TILE_SIZE,
+      bubble.y * TILE_SIZE + yOffset
+    );
+    
+    ctx.restore();
+  });
+}
+
+export default function OfficeCanvas({ map, users, currentUserId, emotes, deskClaims, reactionBubbles, onMove, onCameraChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cameraRef = useRef({ x: 0, y: 0 });
   const playerPosRef = useRef({ x: 20, y: 13 });
@@ -1320,7 +1411,7 @@ export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove
         for (let gx = startTileX; gx < endTileX; gx++) {
           const tile = map.tiles[gy]?.[gx];
           if (tile === undefined) continue;
-          drawTile(ctx, tile, gx * TILE_SIZE, gy * TILE_SIZE, TILE_SIZE, time, map, gx, gy);
+          drawTile(ctx, tile, gx * TILE_SIZE, gy * TILE_SIZE, TILE_SIZE, time, map, gx, gy, deskClaims);
         }
       }
 
@@ -1358,6 +1449,11 @@ export default function OfficeCanvas({ map, users, currentUserId, emotes, onMove
         ctx.textAlign = 'center';
         ctx.fillText(emote.emoji, emote.position.x * TILE_SIZE, emote.position.y * TILE_SIZE + yOff);
         ctx.globalAlpha = 1;
+      }
+
+      // Reaction bubbles
+      if (reactionBubbles) {
+        drawReactionBubbles(ctx, reactionBubbles, time);
       }
 
       ctx.restore();

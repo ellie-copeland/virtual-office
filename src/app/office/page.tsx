@@ -20,6 +20,10 @@ import GameLauncher from '@/components/games/GameLauncher';
 import GameLobby from '@/components/games/GameLobby';
 import GameOverlay from '@/components/games/GameOverlay';
 import MeetingRoomView from '@/components/office/MeetingRoomView';
+import InteractionOverlay from '@/components/office/InteractionOverlay';
+import UserContextMenu from '@/components/office/UserContextMenu';
+import StatusBar from '@/components/office/StatusBar';
+import NotificationToast from '@/components/office/NotificationToast';
 
 export default function OfficePage() {
   return (
@@ -66,6 +70,26 @@ function OfficeInner() {
   const rtcRef = useRef<WebRTCManager | null>(null);
   const teleportedRef = useRef(false);
 
+  // New UI state
+  const [deskClaims, setDeskClaims] = useState<Array<{
+    tileKey: string;
+    userId: string;
+    userName: string;
+    userColor: string;
+  }>>([]);
+  const [reactionBubbles, setReactionBubbles] = useState<Array<{
+    id: string;
+    userId: string;
+    emoji: string;
+    x: number;
+    y: number;
+    startTime: number;
+  }>>([]);
+  const [contextMenuState, setContextMenuState] = useState<{
+    user: User | null;
+    position: { x: number; y: number } | null;
+  }>({ user: null, position: null });
+
   // Check calendar connection on mount
   useEffect(() => {
     if (searchParams.get('calendar') === 'connected') {
@@ -74,12 +98,19 @@ function OfficeInner() {
   }, [searchParams]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('vo-user');
-    if (!saved) { router.push('/'); return; }
+    // Check for JWT token first (new auth system)
+    const token = localStorage.getItem('vo-token');
+    if (token) {
+      const socket = connectSocket(token);
+      socketRef.current = socket;
+    } else {
+      // Fallback to legacy system
+      const saved = localStorage.getItem('vo-user');
+      if (!saved) { router.push('/'); return; }
 
-    const userData = JSON.parse(saved);
-    const socket = connectSocket();
-    socketRef.current = socket;
+      const userData = JSON.parse(saved);
+      const socket = connectSocket();
+      socketRef.current = socket;
 
     socket.on('init', (data: {
       userId: string;
@@ -175,7 +206,49 @@ function OfficeInner() {
       setActiveGame({ id: gameId, type });
     });
 
-    socket.emit('join', { name: userData.name, color: userData.color, title: userData.title });
+    // New socket events
+    socket.on('desk:claimed', (data: { tileKey: string; userId: string; userName: string; userColor: string }) => {
+      setDeskClaims(prev => [...prev.filter(d => d.tileKey !== data.tileKey), data]);
+    });
+
+    socket.on('desk:released', (data: { tileKey: string }) => {
+      setDeskClaims(prev => prev.filter(d => d.tileKey !== data.tileKey));
+    });
+
+    socket.on('reaction', (data: { userId: string; emoji: string; position: { x: number; y: number } }) => {
+      const bubble = {
+        id: `${data.userId}-${Date.now()}`,
+        userId: data.userId,
+        emoji: data.emoji,
+        x: data.position.x,
+        y: data.position.y,
+        startTime: Date.now(),
+      };
+      setReactionBubbles(prev => [...prev, bubble]);
+      
+      // Clean up after 2 seconds
+      setTimeout(() => {
+        setReactionBubbles(prev => prev.filter(b => b.id !== bubble.id));
+      }, 2000);
+    });
+
+      // Handle auth-required event
+      socket.on('auth:required', () => {
+        localStorage.removeItem('vo-token');
+        localStorage.removeItem('vo-user-data');
+        router.push('/');
+      });
+
+      // Join with appropriate data based on auth method
+      if (token) {
+        // JWT auth - socket will get user data from token
+        socket.emit('join', {});
+      } else {
+        // Legacy auth
+        const userData = JSON.parse(saved);
+        socket.emit('join', { name: userData.name, color: userData.color, title: userData.title });
+      }
+    }
 
     return () => {
       rtcRef.current?.destroy();
@@ -324,6 +397,35 @@ function OfficeInner() {
     window.location.href = '/api/calendar';
   }, []);
 
+  // New handlers
+  const handleUserContextMenu = useCallback((user: User, event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenuState({
+      user,
+      position: { x: event.clientX, y: event.clientY }
+    });
+  }, []);
+
+  const handleStartDM = useCallback((userId: string) => {
+    setIsChatOpen(true);
+    // The ChatPanel will handle switching to DM tab and selecting the user
+  }, []);
+
+  const handleStatusMessageChange = useCallback((message: string) => {
+    socketRef.current?.emit('statusMessage:set', { message });
+  }, []);
+
+  const handleNavigateToUser = useCallback((roomId?: string, userId?: string) => {
+    if (roomId && mapData) {
+      const room = mapData.rooms.find(r => r.id === roomId);
+      if (room) {
+        const centerX = room.bounds.x + Math.floor(room.bounds.width / 2);
+        const centerY = room.bounds.y + Math.floor(room.bounds.height / 2);
+        socketRef.current?.emit('move', { x: centerX, y: centerY });
+      }
+    }
+  }, [mapData]);
+
   if (!mapData || !userId) {
     return (
       <div style={{
@@ -386,10 +488,12 @@ function OfficeInner() {
         emotes={emotes}
         meetingRoomStates={meetingRoomStates}
         scheduledMeetings={scheduledMeetings}
+        deskClaims={deskClaims}
+        reactionBubbles={reactionBubbles}
         onMove={handleMove}
         onCameraChange={(x, y) => setCameraOffset({ x, y })}
       />
-      <UserList users={users} currentUserId={userId} />
+      <UserList users={users} currentUserId={userId} onUserRightClick={handleUserContextMenu} />
       <MiniMap map={mapData} users={users} currentUserId={userId} />
       <VideoOverlay
         users={users}
@@ -466,6 +570,40 @@ function OfficeInner() {
           onClose={() => setActiveGame(null)}
         />
       )}
+
+      {/* New UI Components */}
+      <InteractionOverlay
+        map={mapData}
+        users={users}
+        currentUserId={userId}
+      />
+
+      <UserContextMenu
+        user={contextMenuState.user}
+        currentUserId={userId}
+        currentUser={me || null}
+        position={contextMenuState.position}
+        onClose={() => setContextMenuState({ user: null, position: null })}
+        onStartDM={handleStartDM}
+      />
+
+      <StatusBar
+        users={users}
+        currentUserId={userId}
+        currentRoom={currentRoom || null}
+        isMuted={isMuted}
+        isCameraOn={isCameraOn}
+        onStatusMessageChange={handleStatusMessageChange}
+      />
+
+      <NotificationToast
+        users={users}
+        currentUserId={userId}
+        messages={messages}
+        meetings={scheduledMeetings}
+        rooms={mapData.rooms}
+        onNavigate={handleNavigateToUser}
+      />
     </div>
   );
 }

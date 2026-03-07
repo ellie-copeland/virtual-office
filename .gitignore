@@ -1,3 +1,7 @@
 node_modules/
 .next/
 *.tsbuildinfo
+
+# Data directory (keep structure but ignore files)
+data/*
+!data/.gitkeep

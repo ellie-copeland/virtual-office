@@ -36,7 +36,7 @@ export default function Toolbar(props: Props) {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+      position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
       background: '#2d2d3d', borderRadius: 16, padding: '8px 16px',
       display: 'flex', alignItems: 'center', gap: 8,
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100,
