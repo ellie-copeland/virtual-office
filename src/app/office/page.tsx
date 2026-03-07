@@ -432,25 +432,60 @@ function OfficeInner() {
   const currentRoom = me?.roomId ? mapData.rooms.find(r => r.id === me.roomId) : null;
   const isInMeetingRoom = currentRoom?.type === 'meeting';
 
-  // Show meeting room view when in a meeting room (unless playing a game)
-  if (isInMeetingRoom && currentRoom && !activeGame) {
+  // Show meeting room view when in a meeting room (games overlay on top)
+  if (isInMeetingRoom && currentRoom) {
     return (
-      <MeetingRoomView
-        room={currentRoom}
-        roomState={meetingRoomStates[currentRoom.id] || null}
-        users={users}
-        currentUserId={userId}
-        remoteStreams={remoteStreams}
-        localStream={localStream}
-        isMuted={isMuted}
-        isCameraOn={isCameraOn}
-        isScreenSharing={isScreenSharing}
-        onToggleMic={handleToggleMic}
-        onToggleCamera={handleToggleCamera}
-        onToggleScreenShare={handleToggleScreenShare}
-        onLeaveRoom={handleLeaveRoom}
-        onCopyLink={() => {}}
-      />
+      <>
+        <MeetingRoomView
+          room={currentRoom}
+          roomState={meetingRoomStates[currentRoom.id] || null}
+          users={users}
+          currentUserId={userId}
+          remoteStreams={remoteStreams}
+          localStream={localStream}
+          isMuted={isMuted}
+          isCameraOn={isCameraOn}
+          isScreenSharing={isScreenSharing}
+          onToggleMic={handleToggleMic}
+          onToggleCamera={handleToggleCamera}
+          onToggleScreenShare={handleToggleScreenShare}
+          onLeaveRoom={handleLeaveRoom}
+          onCopyLink={() => {}}
+          onOpenGames={() => setShowGameLauncher(true)}
+        />
+
+        {/* Game UI overlays on top of meeting */}
+        {showGameLauncher && socketRef.current && (
+          <GameLauncher
+            socket={socketRef.current}
+            userName={me?.name || 'Player'}
+            userColor={me?.color || '#fff'}
+            onJoinGame={(session) => { setShowGameLauncher(false); setCurrentGameSession(session); }}
+            onClose={() => setShowGameLauncher(false)}
+          />
+        )}
+
+        {currentGameSession && socketRef.current && !activeGame && (
+          <GameLobby
+            socket={socketRef.current}
+            session={currentGameSession}
+            onStart={() => {}}
+            onLeave={() => {
+              socketRef.current?.emit('game:leave', { gameId: currentGameSession.id });
+              setCurrentGameSession(null);
+            }}
+          />
+        )}
+
+        {activeGame && socketRef.current && (
+          <GameOverlay
+            socket={socketRef.current}
+            gameId={activeGame.id}
+            gameType={activeGame.type}
+            onClose={() => setActiveGame(null)}
+          />
+        )}
+      </>
     );
   }
 

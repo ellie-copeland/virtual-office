@@ -18,6 +18,7 @@ interface Props {
   onToggleScreenShare: () => void;
   onLeaveRoom: () => void;
   onCopyLink: () => void;
+  onOpenGames?: () => void;
 }
 
 export default function MeetingRoomView({
@@ -25,7 +26,7 @@ export default function MeetingRoomView({
   remoteStreams, localStream,
   isMuted, isCameraOn, isScreenSharing,
   onToggleMic, onToggleCamera, onToggleScreenShare,
-  onLeaveRoom, onCopyLink,
+  onLeaveRoom, onCopyLink, onOpenGames,
 }: Props) {
   const [elapsed, setElapsed] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -126,6 +127,11 @@ export default function MeetingRoomView({
         <button onClick={onToggleScreenShare} style={btnStyle(isScreenSharing, '#2196F3')} title="Screen share">
           🖥️
         </button>
+        {onOpenGames && (
+          <button onClick={onOpenGames} style={btnStyle(false, '#FF9800')} title="Games">
+            🎮
+          </button>
+        )}
         <div style={{ width: 1, height: 32, background: '#333', margin: '0 8px' }} />
         <button onClick={onLeaveRoom} style={btnStyle(false, '#e74c3c')}>
           <span style={{ color: '#e74c3c' }}>📞</span>
