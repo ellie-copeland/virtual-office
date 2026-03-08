@@ -1,6 +1,6 @@
 // ── Shared Game Types ──
 
-export type GameType = 'space-invaders' | 'bomberman' | 'jump-n-bump';
+export type GameType = 'space-invaders' | 'bomberman' | 'jump-n-bump' | 'zombie-survival';
 
 export interface GameSession {
   id: string;
@@ -122,6 +122,77 @@ export interface JNBState {
   gameOver: boolean;
   winnerId: string | null;
   timeLeft: number; // seconds
+}
+
+// ── Zombie Survival ──
+
+export type ZSWeapon = 'pistol' | 'shotgun' | 'rifle';
+
+export interface ZSPlayer {
+  x: number;
+  y: number;
+  health: number;
+  maxHealth: number;
+  weapon: ZSWeapon;
+  ammo: number;
+  kills: number;
+  alive: boolean;
+  angle: number;
+}
+
+export interface ZSZombie {
+  id: string;
+  x: number;
+  y: number;
+  health: number;
+  speed: number;
+  type: 'normal' | 'fast' | 'tank';
+}
+
+export interface ZSPickup {
+  id: string;
+  x: number;
+  y: number;
+  type: 'health' | 'ammo' | 'shotgun' | 'rifle';
+}
+
+export interface ZSObstacle {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface ZSBullet {
+  id: string;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  ownerId: string;
+  damage: number;
+}
+
+export interface ZSParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  life: number;
+}
+
+export interface ZSState {
+  players: Record<string, ZSPlayer>;
+  zombies: ZSZombie[];
+  pickups: ZSPickup[];
+  obstacles: ZSObstacle[];
+  bullets: ZSBullet[];
+  particles: ZSParticle[];
+  wave: number;
+  waveTimer: number;
+  gameOver: boolean;
+  winnerId: string | null;
 }
 
 // ── Socket Events ──

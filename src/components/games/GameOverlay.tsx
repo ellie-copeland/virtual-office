@@ -6,6 +6,7 @@ import { GameSession, GameType } from '@/lib/game-types';
 import SpaceInvaders from './SpaceInvaders';
 import Bomberman from './Bomberman';
 import JumpNBump from './JumpNBump';
+import ZombieSurvival from './ZombieSurvival';
 
 interface Props {
   socket: Socket;
@@ -33,7 +34,8 @@ export default function GameOverlay({ socket, gameId, gameType, onClose }: Props
       }}>
         <span style={{ color: '#888', fontFamily: 'monospace', fontSize: 13 }}>
           {gameType === 'space-invaders' ? '👾 Space Invaders' :
-           gameType === 'bomberman' ? '💣 Bomberman' : '🐰 Jump \'n Bump'}
+           gameType === 'bomberman' ? '💣 Bomberman' :
+           gameType === 'zombie-survival' ? '🧟 Zombie Survival' : '🐰 Jump \'n Bump'}
         </span>
         <button onClick={handleLeave} style={{
           background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 6,
@@ -46,6 +48,7 @@ export default function GameOverlay({ socket, gameId, gameType, onClose }: Props
         {gameType === 'space-invaders' && <SpaceInvaders socket={socket} gameId={gameId} />}
         {gameType === 'bomberman' && <Bomberman socket={socket} gameId={gameId} />}
         {gameType === 'jump-n-bump' && <JumpNBump socket={socket} gameId={gameId} />}
+        {gameType === 'zombie-survival' && <ZombieSurvival socket={socket} gameId={gameId} />}
       </div>
     </div>
   );

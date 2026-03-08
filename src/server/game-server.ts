@@ -4,12 +4,17 @@ import {
   SIState, SIAlien, SIBullet,
   BMState, BMCell, BMBomb, BMExplosion, BMPlayer,
   JNBState, JNBPlayer, JNBParticle, JNBPlatform,
+  ZSState, ZSZombie, ZSBullet, ZSPickup, ZSObstacle, ZSParticle, ZSPlayer, ZSWeapon,
 } from '../lib/game-types';
 
 const games = new Map<string, GameSession>();
 const siStates = new Map<string, SIState>();
 const bmStates = new Map<string, BMState>();
 const jnbStates = new Map<string, JNBState>();
+const zsStates = new Map<string, ZSState>();
+const zsLastShot = new Map<string, number>(); // playerId -> last shot timestamp
+const zsLastMelee = new Map<string, number>(); // zombieId:playerId -> last melee timestamp
+const zsPickupTimers = new Map<string, number>(); // gameId -> tick counter for pickup spawning
 const gameIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
 function genId() {
@@ -382,6 +387,233 @@ function tickJNB(gameId: string, io: SocketServer) {
 }
 
 // ════════════════════════════════════════
+// ZOMBIE SURVIVAL
+// ════════════════════════════════════════
+
+const ZS_W = 800;
+const ZS_H = 600;
+
+function initZombieGame(gameId: string, players: Map<string, { name: string; color: string }>): ZSState {
+  // Generate 10 random obstacles avoiding edges (40px margin) and player spawn center area (300-500 x 200-400)
+  const obstacles: ZSObstacle[] = [];
+  while (obstacles.length < 10) {
+    const x = 40 + Math.random() * (ZS_W - 120); // avoid edges
+    const y = 40 + Math.random() * (ZS_H - 120);
+    // Skip if overlapping center spawn area
+    if (x + 40 > 250 && x < 550 && y + 40 > 150 && y < 450) continue;
+    // Skip if overlapping existing obstacle
+    const overlap = obstacles.some(o =>
+      x < o.x + o.w && x + 40 > o.x && y < o.y + o.h && y + 40 > o.y
+    );
+    if (overlap) continue;
+    obstacles.push({ x, y, w: 40, h: 40 });
+  }
+
+  const state: ZSState = {
+    players: {},
+    zombies: [],
+    pickups: [],
+    obstacles,
+    bullets: [],
+    particles: [],
+    wave: 0,
+    waveTimer: 100, // 5s at 20fps
+    gameOver: false,
+    winnerId: null,
+  };
+
+  // Add players with random spawn positions in center area
+  players.forEach((_, playerId) => {
+    state.players[playerId] = {
+      x: 300 + Math.random() * 200,
+      y: 200 + Math.random() * 200,
+      health: 100,
+      maxHealth: 100,
+      weapon: 'pistol',
+      ammo: 999,
+      kills: 0,
+      alive: true,
+      angle: 0,
+    };
+  });
+
+  zsStates.set(gameId, state);
+  return state;
+}
+
+function spawnZombieWave(state: ZSState) {
+  state.wave++;
+  const count = 5 + state.wave * 3;
+
+  for (let i = 0; i < count; i++) {
+    const roll = Math.random();
+    const type: ZSZombie['type'] = roll < 0.7 ? 'normal' : roll < 0.9 ? 'fast' : 'tank';
+    const stats = type === 'normal' ? { health: 3, speed: 1.5 }
+      : type === 'fast' ? { health: 1, speed: 3 }
+      : { health: 10, speed: 0.8 };
+
+    // Random edge spawn
+    const edge = Math.floor(Math.random() * 4);
+    let x: number, y: number;
+    switch (edge) {
+      case 0: x = Math.random() * ZS_W; y = 0; break;          // top
+      case 1: x = Math.random() * ZS_W; y = ZS_H; break;       // bottom
+      case 2: x = 0; y = Math.random() * ZS_H; break;           // left
+      default: x = ZS_W; y = Math.random() * ZS_H; break;       // right
+    }
+
+    state.zombies.push({ id: genId(), x, y, health: stats.health, speed: stats.speed, type });
+  }
+
+  state.waveTimer = 0;
+}
+
+const WEAPON_STATS: Record<ZSWeapon, { damage: number; rate: number; bullets: number; spread: number }> = {
+  pistol: { damage: 1, rate: 6, bullets: 1, spread: 0 },
+  shotgun: { damage: 1, rate: 16, bullets: 5, spread: 0.3 },
+  rifle: { damage: 2, rate: 3, bullets: 1, spread: 0 },
+};
+
+const zsTickCount = new Map<string, number>();
+
+function tickZombie(gameId: string, io: SocketServer) {
+  const state = zsStates.get(gameId);
+  const game = games.get(gameId);
+  if (!state || !game) return;
+  if (state.gameOver) {
+    game.state = 'ended';
+    const interval = gameIntervals.get(gameId);
+    if (interval) clearInterval(interval);
+    return;
+  }
+
+  const tick = (zsTickCount.get(gameId) || 0) + 1;
+  zsTickCount.set(gameId, tick);
+  const alivePlayers = Object.entries(state.players).filter(([, p]) => p.alive);
+
+  // Wave logic
+  if (state.zombies.length === 0) {
+    state.waveTimer++;
+    if (state.wave === 0 || state.waveTimer >= 100) {
+      if (state.wave >= 10) {
+        state.gameOver = true;
+        const best = alivePlayers.sort(([, a], [, b]) => b.kills - a.kills)[0];
+        state.winnerId = best ? best[0] : null;
+        io.to(gameId).emit('game:zombie-state', state);
+        return;
+      }
+      spawnZombieWave(state);
+    }
+  }
+
+  // Move zombies toward nearest player
+  for (const z of state.zombies) {
+    if (alivePlayers.length === 0) break;
+    let nearest = alivePlayers[0];
+    let minDist = Infinity;
+    for (const entry of alivePlayers) {
+      const d = Math.hypot(entry[1].x - z.x, entry[1].y - z.y);
+      if (d < minDist) { minDist = d; nearest = entry; }
+    }
+    const dx = nearest[1].x - z.x;
+    const dy = nearest[1].y - z.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    z.x += (dx / dist) * z.speed;
+    z.y += (dy / dist) * z.speed;
+    z.x = Math.max(5, Math.min(ZS_W - 5, z.x));
+    z.y = Math.max(5, Math.min(ZS_H - 5, z.y));
+  }
+
+  // Zombie melee damage
+  for (const z of state.zombies) {
+    for (const [pid, p] of Object.entries(state.players)) {
+      if (!p.alive) continue;
+      if (Math.hypot(p.x - z.x, p.y - z.y) < 20) {
+        const key = `${z.id}:${pid}`;
+        const last = zsLastMelee.get(key) || 0;
+        if (tick - last >= 10) {
+          p.health -= 10;
+          zsLastMelee.set(key, tick);
+          state.particles.push({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, color: '#ff0000', life: 15 });
+          if (p.health <= 0) { p.health = 0; p.alive = false; }
+        }
+      }
+    }
+  }
+
+  // Move bullets
+  state.bullets = state.bullets.filter(b => {
+    b.x += b.dx * 8; b.y += b.dy * 8;
+    return b.x >= 0 && b.x <= ZS_W && b.y >= 0 && b.y <= ZS_H;
+  });
+
+  // Bullet-zombie collision
+  const deadBullets = new Set<string>();
+  const deadZombies = new Set<string>();
+  for (const b of state.bullets) {
+    if (deadBullets.has(b.id)) continue;
+    for (const z of state.zombies) {
+      if (deadZombies.has(z.id)) continue;
+      if (Math.hypot(z.x - b.x, z.y - b.y) < 18) {
+        z.health -= b.damage;
+        deadBullets.add(b.id);
+        state.particles.push({ x: z.x, y: z.y, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, color: '#00ff00', life: 10 });
+        if (z.health <= 0) { deadZombies.add(z.id); const shooter = state.players[b.ownerId]; if (shooter) shooter.kills++; }
+        break;
+      }
+    }
+  }
+
+  // Bullet-player collision (50% friendly fire)
+  for (const b of state.bullets) {
+    if (deadBullets.has(b.id)) continue;
+    for (const [pid, p] of Object.entries(state.players)) {
+      if (!p.alive || pid === b.ownerId) continue;
+      if (Math.hypot(p.x - b.x, p.y - b.y) < 15) {
+        p.health -= b.damage * 0.5;
+        deadBullets.add(b.id);
+        state.particles.push({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, color: '#ff4444', life: 12 });
+        if (p.health <= 0) { p.health = 0; p.alive = false; }
+        break;
+      }
+    }
+  }
+
+  state.bullets = state.bullets.filter(b => !deadBullets.has(b.id));
+  state.zombies = state.zombies.filter(z => !deadZombies.has(z.id));
+
+  // Pickup collection
+  state.pickups = state.pickups.filter(pk => {
+    for (const [, p] of Object.entries(state.players)) {
+      if (!p.alive) continue;
+      if (Math.hypot(p.x - pk.x, p.y - pk.y) < 25) {
+        if (pk.type === 'health') p.health = Math.min(p.maxHealth, p.health + 30);
+        else if (pk.type === 'ammo') p.ammo += 20;
+        else if (pk.type === 'shotgun') { p.weapon = 'shotgun'; p.ammo = Math.max(p.ammo, 30); }
+        else if (pk.type === 'rifle') { p.weapon = 'rifle'; p.ammo = Math.max(p.ammo, 30); }
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Spawn pickups every 200 ticks
+  if (tick % 200 === 0 && state.pickups.length < 8) {
+    const roll = Math.random();
+    const type: ZSPickup['type'] = roll < 0.4 ? 'health' : roll < 0.7 ? 'ammo' : roll < 0.85 ? 'shotgun' : 'rifle';
+    state.pickups.push({ id: genId(), x: 50 + Math.random() * (ZS_W - 100), y: 50 + Math.random() * (ZS_H - 100), type });
+  }
+
+  // All players dead
+  if (alivePlayers.length === 0) { state.gameOver = true; state.winnerId = null; }
+
+  // Decay particles
+  state.particles = state.particles.filter(p => { p.x += p.vx; p.y += p.vy; p.life--; return p.life > 0; });
+
+  io.to(gameId).emit('game:zombie-state', state);
+}
+
+// ════════════════════════════════════════
 // MAIN SETUP
 // ════════════════════════════════════════
 
@@ -437,6 +669,12 @@ export function setupGameServer(io: SocketServer) {
         jnbStates.set(gameId, st);
         const interval = setInterval(() => tickJNB(gameId, io), 33);
         gameIntervals.set(gameId, interval);
+      } else if (game.type === 'zombie-survival') {
+        const playerMap = new Map<string, { name: string; color: string }>();
+        game.players.forEach(p => playerMap.set(p.id, { name: p.name, color: p.color }));
+        initZombieGame(gameId, playerMap);
+        const interval = setInterval(() => tickZombie(gameId, io), 50); // 20fps
+        gameIntervals.set(gameId, interval);
       }
 
       io.to(gameId).emit('game:started', { gameId, type: game.type });
@@ -491,6 +729,35 @@ export function setupGameServer(io: SocketServer) {
         if (input.left) { p.vx -= JNB_SPEED * 0.3; p.facing = -1; }
         if (input.right) { p.vx += JNB_SPEED * 0.3; p.facing = 1; }
         if (input.jump && p.grounded) { p.vy = JNB_JUMP; p.grounded = false; }
+      } else if (game.type === 'zombie-survival') {
+        const st = zsStates.get(gameId);
+        if (!st || !st.players[socket.id]?.alive) return;
+        const p = st.players[socket.id];
+        // Movement
+        if (input.dx !== undefined) p.x += input.dx * 3;
+        if (input.dy !== undefined) p.y += input.dy * 3;
+        p.x = Math.max(10, Math.min(ZS_W - 10, p.x));
+        p.y = Math.max(10, Math.min(ZS_H - 10, p.y));
+        if (input.angle !== undefined) p.angle = input.angle;
+        // Shooting
+        if (input.shooting && p.ammo > 0) {
+          const wep = WEAPON_STATS[p.weapon];
+          const tick = zsTickCount.get(gameId) || 0;
+          const lastShot = zsLastShot.get(socket.id) || 0;
+          if (tick - lastShot >= wep.rate) {
+            zsLastShot.set(socket.id, tick);
+            for (let i = 0; i < wep.bullets; i++) {
+              const spread = (Math.random() - 0.5) * wep.spread * 2;
+              const angle = p.angle + spread;
+              st.bullets.push({
+                id: genId(), x: p.x, y: p.y,
+                dx: Math.cos(angle), dy: Math.sin(angle),
+                ownerId: socket.id, damage: wep.damage,
+              });
+            }
+            if (p.weapon !== 'pistol') p.ammo--;
+          }
+        }
       }
     });
 
@@ -523,6 +790,8 @@ function leaveGame(socket: Socket, gameId: string, io: SocketServer) {
     siStates.delete(gameId);
     bmStates.delete(gameId);
     jnbStates.delete(gameId);
+    zsStates.delete(gameId);
+    zsTickCount.delete(gameId);
     games.delete(gameId);
   } else {
     if (game.hostId === socket.id) game.hostId = game.players[0].id;

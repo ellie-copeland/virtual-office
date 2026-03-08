@@ -16,6 +16,7 @@ const GAMES: { type: GameType; name: string; icon: string; desc: string; color: 
   { type: 'space-invaders', name: 'Space Invaders', icon: '👾', desc: 'Co-op alien blasting', color: '#00ff41' },
   { type: 'bomberman', name: 'Bomberman', icon: '💣', desc: 'Blow up your friends', color: '#ff6b35' },
   { type: 'jump-n-bump', name: "Jump 'n Bump", icon: '🐰', desc: 'Stomp heads, score points', color: '#ff69b4' },
+  { type: 'zombie-survival', name: 'Zombie Survival', icon: '🧟', desc: 'PvP zombie apocalypse', color: '#2ecc71' },
 ];
 
 const overlay: React.CSSProperties = {
